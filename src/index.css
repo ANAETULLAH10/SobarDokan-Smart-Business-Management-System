@@ -1,0 +1,224 @@
+@import "tailwindcss";
+
+@font-face {
+  font-family: 'Noto Sans Bengali';
+  src: url('/fonts/NotoSansBengali-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Noto Sans Bengali';
+  src: url('/fonts/NotoSansBengali-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@layer base {
+  body {
+    background-color: #0b0f19;
+    color: #e2e8f0;
+    font-family: 'Noto Sans Bengali', 'Hind Siliguri', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    overflow-x: hidden;
+  }
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0d1322;
+}
+::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #334155;
+}
+
+/* Print CSS Rules */
+@media print {
+  body {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+  @page {
+    margin: 10mm;
+    size: auto;
+  }
+}
+
+/* ==========================================================================
+   Day Mood (Light Mode) Global Theme Overrides
+   Activated when <html class="day-mood"> or <body class="day-mood">
+   ========================================================================== */
+html.day-mood,
+body.day-mood {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+/* Base Surfaces & Router Main */
+html.day-mood body,
+html.day-mood #root,
+html.day-mood main,
+html.day-mood .bg-\[\#070b14\],
+html.day-mood .bg-\[\#0b0f19\],
+html.day-mood .bg-\[\#0d1322\] {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+}
+
+/* Header & Navigation */
+html.day-mood header#main-header,
+html.day-mood header.bg-\[\#0b101d\] {
+  background-color: #ffffff !important;
+  border-bottom-color: #e2e8f0 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+}
+
+html.day-mood header .text-white {
+  color: #0f172a !important;
+}
+
+html.day-mood header .text-slate-400,
+html.day-mood header .text-slate-300 {
+  color: #64748b !important;
+}
+
+html.day-mood header .bg-\[\#12192c\] {
+  background-color: #f1f5f9 !important;
+  border-color: #e2e8f0 !important;
+  color: #334155 !important;
+}
+
+html.day-mood header .bg-\[\#12192c\]:hover {
+  background-color: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+/* Sidebar */
+html.day-mood aside,
+html.day-mood aside.bg-\[\#0b101d\] {
+  background-color: #ffffff !important;
+  border-right-color: #e2e8f0 !important;
+  box-shadow: 1px 0 3px rgba(0, 0, 0, 0.03) !important;
+}
+
+html.day-mood aside .text-white {
+  color: #0f172a !important;
+}
+
+html.day-mood aside .text-slate-400,
+html.day-mood aside .text-slate-300 {
+  color: #64748b !important;
+}
+
+html.day-mood aside .text-slate-400\/80 {
+  color: #94a3b8 !important;
+}
+
+html.day-mood aside .bg-\[\#12192c\] {
+  background-color: #f1f5f9 !important;
+  border-color: #e2e8f0 !important;
+}
+
+/* Cards & Panel Containers */
+html.day-mood .bg-\[\#0f172a\],
+html.day-mood .bg-\[\#111827\],
+html.day-mood .bg-\[\#12192c\],
+html.day-mood .bg-\[\#131d33\],
+html.day-mood .bg-\[\#0d1424\] {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+html.day-mood .bg-\[\#18223c\],
+html.day-mood .bg-\[\#1a233d\],
+html.day-mood .bg-\[\#1e293b\] {
+  background-color: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+
+/* Borders */
+html.day-mood .border-\[\#192238\],
+html.day-mood .border-\[\#1e2a47\],
+html.day-mood .border-\[\#1e293b\],
+html.day-mood .border-\[\#233152\],
+html.day-mood .border-\[\#2d3748\],
+html.day-mood .border-slate-800,
+html.day-mood .border-slate-700 {
+  border-color: #e2e8f0 !important;
+}
+
+/* Typography In Day Mood */
+html.day-mood .text-slate-100,
+html.day-mood .text-slate-200 {
+  color: #1e293b !important;
+}
+
+html.day-mood .text-slate-300,
+html.day-mood .text-slate-400 {
+  color: #475569 !important;
+}
+
+/* Tables & Lists */
+html.day-mood table thead tr {
+  background-color: #f8fafc !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+html.day-mood table thead th {
+  color: #475569 !important;
+}
+
+html.day-mood table tbody tr {
+  border-bottom-color: #f1f5f9 !important;
+}
+
+html.day-mood table tbody tr:hover {
+  background-color: #f8fafc !important;
+}
+
+/* Form Controls & Inputs */
+html.day-mood input:not([type="checkbox"]):not([type="radio"]),
+html.day-mood select,
+html.day-mood textarea {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+}
+
+html.day-mood input::placeholder,
+html.day-mood textarea::placeholder {
+  color: #94a3b8 !important;
+}
+
+/* Dropdowns & Popovers */
+html.day-mood .shadow-2xl,
+html.day-mood .shadow-xl {
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Light Mode Scrollbars */
+html.day-mood ::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+html.day-mood ::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+}
+html.day-mood ::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}

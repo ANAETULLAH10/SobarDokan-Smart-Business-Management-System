@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      // Compatibility polyfill for environments where window.fetch has only a getter
+      (function() {
+        try {
+          var originalFetch = window.fetch;
+          var _fetch = originalFetch ? function() {
+            return originalFetch.apply(window, arguments);
+          } : undefined;
+
+          Object.defineProperty(window, 'fetch', {
+            get: function() {
+              return _fetch;
+            },
+            set: function(fn) {
+              _fetch = fn;
+            },
+            configurable: true,
+            enumerable: true
+          });
+        } catch (e) {
+          try {
+            var proto = Object.getPrototypeOf(window);
+            if (proto) {
+              var protoFetch = proto.fetch || window.fetch;
+              var _pFetch = protoFetch ? function() {
+                return protoFetch.apply(window, arguments);
+              } : undefined;
+              Object.defineProperty(proto, 'fetch', {
+                get: function() { return _pFetch; },
+                set: function(fn) { _pFetch = fn; },
+                configurable: true,
+                enumerable: true
+              });
+            }
+          } catch (err) {}
+        }
+      })();
+    </script>
+    <title>AmarDokan – Smart Business Management System</title>
+    <meta name="description" content="A complete desktop business management and POS system with real-time voice conversations powered by Gemini Live API, sales, inventory, accounting, and reports." />
+    <meta property="og:title" content="AmarDokan – Smart Business Management System" />
+    <meta property="og:description" content="A complete desktop business management and POS system with real-time voice conversations powered by Gemini Live API, sales, inventory, accounting, and reports." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+

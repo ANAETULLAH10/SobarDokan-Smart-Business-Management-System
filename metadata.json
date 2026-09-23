@@ -1,0 +1,6 @@
+{
+  "name": "AmarDokan – Smart Business Management System",
+  "description": "A complete desktop business management and POS system with real-time voice conversations powered by Gemini Live API, sales, inventory, accounting, and reports.",
+  "requestFramePermissions": ["camera", "microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
