@@ -39,9 +39,10 @@ export const UserAvatarDropdown: React.FC<UserAvatarDropdownProps> = ({
   // Retrieve current admin profile from SettingsService
   const adminProfile = SettingsService.getAdminProfile();
 
+  const isOwner = user?.isOwner || user?.role === 'superadmin' || user?.email === 'mdanaetullah2021@gmail.com';
   const userName = user?.name || adminProfile.name || (isBn ? 'এডমিন' : 'Admin');
-  const userEmail = user?.email || adminProfile.email || 'admin@amardokan.com';
-  const userRole = adminProfile.role || 'Owner';
+  const userEmail = user?.email || adminProfile.email || 'admin@sobardokan.app';
+  const userRole = isOwner ? 'owner' : (user?.role || adminProfile.role || 'Admin');
   const userAvatar = user?.photoURL || adminProfile.photoURL || adminProfile.avatar;
 
   const userInitials = userName
@@ -56,8 +57,9 @@ export const UserAvatarDropdown: React.FC<UserAvatarDropdownProps> = ({
   const getRoleBadge = (role: string) => {
     switch (role.toLowerCase()) {
       case 'owner':
+      case 'superadmin':
         return {
-          text: isBn ? 'মালিক (Owner)' : 'Owner',
+          text: isBn ? '👑 অ্যাপ মালিক (App Owner)' : '👑 App Owner',
           badgeClass: 'bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-300 border-amber-500/30',
           dotClass: 'bg-amber-400'
         };

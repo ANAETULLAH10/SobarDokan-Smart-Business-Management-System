@@ -57,6 +57,8 @@ export const AuthView: React.FC<AuthViewProps> = ({
 
       // Check if user already exists
       const existingUser = StorageService.findUserByEmail(firebaseUser.email || '');
+      const isOwner = StorageService.isOwnerEmail(firebaseUser.email);
+      const ownerCfg = StorageService.getOwnerConfig();
 
       let userObj: User;
       const now = new Date();
@@ -65,24 +67,30 @@ export const AuthView: React.FC<AuthViewProps> = ({
       if (existingUser) {
         userObj = {
           ...existingUser,
-          name: firebaseUser.displayName || existingUser.name,
+          name: firebaseUser.displayName || existingUser.name || (isOwner ? ownerCfg.ownerName : 'দোকানদার'),
           photoURL: firebaseUser.photoURL || existingUser.photoURL,
+          isOwner: isOwner || existingUser.isOwner,
+          role: isOwner ? 'superadmin' : existingUser.role,
+          subscriptionStatus: isOwner ? 'active' : existingUser.subscriptionStatus,
+          subscriptionPlan: isOwner ? 'Lifetime Owner Unlimited' : existingUser.subscriptionPlan,
         };
       } else {
-        // New user gets 3-day free trial
         userObj = {
           uid: firebaseUser.uid,
-          name: firebaseUser.displayName || 'দোকানদার',
+          name: firebaseUser.displayName || (isOwner ? ownerCfg.ownerName : 'দোকানদার'),
           email: firebaseUser.email || '',
           photoURL: firebaseUser.photoURL || undefined,
-          role: 'admin',
-          businessName: settings.businessName || 'আমার দোকান',
-          phone: '',
+          role: isOwner ? 'superadmin' : 'admin',
+          isOwner: Boolean(isOwner),
+          businessName: settings.businessName || (isOwner ? 'SobarDokan Main Store' : 'আমার দোকান'),
+          phone: isOwner ? ownerCfg.ownerPhone : '',
           createdAt: now.toISOString(),
           trialStartDate: now.toISOString(),
-          trialEndsAt: threeDaysLater.toISOString(),
-          subscriptionStatus: 'trial',
-          subscriptionPlan: '3-Day Free Trial',
+          trialEndsAt: isOwner
+            ? new Date(now.getTime() + 3650 * 24 * 60 * 60 * 1000).toISOString()
+            : threeDaysLater.toISOString(),
+          subscriptionStatus: isOwner ? 'active' : 'trial',
+          subscriptionPlan: isOwner ? 'Lifetime Owner Unlimited' : '3-Day Free Trial',
         };
       }
 
@@ -124,6 +132,8 @@ export const AuthView: React.FC<AuthViewProps> = ({
     setTimeout(() => {
       // Find registered user
       const existingUser = StorageService.findUserByEmail(loginEmail.trim());
+      const isOwner = StorageService.isOwnerEmail(loginEmail.trim());
+      const ownerCfg = StorageService.getOwnerConfig();
 
       if (existingUser) {
         // If password was stored and doesn't match
@@ -133,20 +143,31 @@ export const AuthView: React.FC<AuthViewProps> = ({
           return;
         }
 
-        StorageService.saveUser(existingUser);
-        onLoginSuccess(existingUser);
+        const loggedUser: User = isOwner
+          ? {
+              ...existingUser,
+              isOwner: true,
+              role: 'superadmin',
+              subscriptionStatus: 'active',
+              subscriptionPlan: 'Lifetime Owner Unlimited',
+            }
+          : existingUser;
+
+        StorageService.saveUser(loggedUser);
+        StorageService.saveRegisteredUser(loggedUser);
+        onLoginSuccess(loggedUser);
       } else {
-        // Check if admin demo email
-        if (loginEmail.trim().toLowerCase() === 'mdanaetullah2021@gmail.com') {
+        // Check if owner credentials
+        if (isOwner) {
           const now = new Date();
           const adminUser: User = {
-            uid: 'admin-1',
-            name: 'MD ANAETULLAH',
-            email: 'mdanaetullah2021@gmail.com',
+            uid: 'admin-owner-1',
+            name: ownerCfg.ownerName || 'MD ANAETULLAH',
+            email: loginEmail.trim(),
             role: 'superadmin',
             isOwner: true,
             businessName: settings.businessName || 'SobarDokan Main Store',
-            phone: settings.phone,
+            phone: ownerCfg.ownerPhone || settings.phone,
             password: loginPassword,
             createdAt: now.toISOString(),
             trialStartDate: now.toISOString(),
@@ -212,23 +233,26 @@ export const AuthView: React.FC<AuthViewProps> = ({
         return;
       }
 
+      const isOwner = StorageService.isOwnerEmail(email.trim());
       const now = new Date();
-      // 3 days free trial
       const threeDaysLater = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
 
       const newUser: User = {
-        uid: 'usr-' + Date.now(),
+        uid: isOwner ? 'admin-owner-1' : 'usr-' + Date.now(),
         name: name.trim(),
         email: email.trim(),
         businessName: businessName.trim(),
         phone: phone.trim(),
         password: password,
-        role: 'admin',
+        role: isOwner ? 'superadmin' : 'admin',
+        isOwner: Boolean(isOwner),
         createdAt: now.toISOString(),
         trialStartDate: now.toISOString(),
-        trialEndsAt: threeDaysLater.toISOString(),
-        subscriptionStatus: 'trial',
-        subscriptionPlan: '3-Day Free Trial',
+        trialEndsAt: isOwner
+          ? new Date(now.getTime() + 3650 * 24 * 60 * 60 * 1000).toISOString()
+          : threeDaysLater.toISOString(),
+        subscriptionStatus: isOwner ? 'active' : 'trial',
+        subscriptionPlan: isOwner ? 'Lifetime Owner Unlimited' : '3-Day Free Trial',
       };
 
       // Also customize store business settings with user's info

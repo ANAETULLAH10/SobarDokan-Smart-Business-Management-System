@@ -1318,6 +1318,16 @@ export class StorageService {
     this.setItem(STORAGE_KEYS.OWNER_CONFIG, config);
   }
 
+  public static isOwnerEmail(email?: string | null): boolean {
+    if (!email) return false;
+    const normalized = email.trim().toLowerCase();
+    const config = this.getOwnerConfig();
+    return (
+      normalized === 'mdanaetullah2021@gmail.com' ||
+      (config.ownerEmail ? normalized === config.ownerEmail.trim().toLowerCase() : false)
+    );
+  }
+
   // Feature Modules Management (SobarDokan Feature Controller)
   public static getFeatureModules(): AppFeatureModule[] {
     return this.getItem<AppFeatureModule[]>(STORAGE_KEYS.FEATURE_MODULES, defaultFeatureModules);
