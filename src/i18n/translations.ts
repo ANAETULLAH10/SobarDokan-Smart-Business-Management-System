@@ -1,7 +1,7 @@
 export const translations = {
   bn: {
-    appName: 'AmarDokan',
-    appSubtitle: 'SMART BUSINESS',
+    appName: 'SobarDokan',
+    appSubtitle: 'সবার দোকান',
     quickSale: 'Quick Sale',
     searchPlaceholder: 'পণ্য, কাস্টমার, বা ইনভয়েস নম্বর খুঁজুন...',
     quickAdd: 'নতুন যোগ করুন',
@@ -187,7 +187,7 @@ export const translations = {
     dismiss: 'বাদ দিন'
   },
   en: {
-    appName: 'AmarDokan',
+    appName: 'SobarDokan',
     appSubtitle: 'SMART BUSINESS',
     quickSale: 'Quick Sale',
     searchPlaceholder: 'Search products, customers, or invoice number...',

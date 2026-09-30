@@ -361,7 +361,21 @@ export type TabType =
   | 'users_management'
   | 'billing_upgrade'
   | 'customer_support'
-  | 'voice_assistant';
+  | 'voice_assistant'
+  | 'owner_master';
+
+export interface OwnerConfig {
+  ownerEmail: string;
+  ownerName: string;
+  ownerPhone: string;
+  ownerWhatsApp: string;
+  bKashNumber: string;
+  nagadNumber: string;
+  rocketNumber: string;
+  monthlyPrice: number;
+  yearlyPrice: number;
+  lifetimePrice: number;
+}
 
 export interface WarrantyClaim {
   id: string;
@@ -471,6 +485,15 @@ export interface User {
   email: string;
   photoURL?: string;
   role?: string;
+  businessName?: string;
+  phone?: string;
+  password?: string;
+  createdAt?: string;
+  trialStartDate?: string;
+  trialEndsAt?: string;
+  subscriptionStatus?: 'trial' | 'active' | 'suspended' | 'expired';
+  subscriptionPlan?: string;
+  isOwner?: boolean;
 }
 
 export interface UserProfile {

@@ -42,17 +42,28 @@
       })();
     </script>
     <script>
-      // Gracefully ignore Vite HMR WebSocket connection errors per AI Studio environment constraints (HMR disabled)
+      // Gracefully ignore benign network aborts, AbortError, and Vite HMR WebSocket connection errors per AI Studio environment constraints
+      function isBenignError(errOrMsg) {
+        if (!errOrMsg) return false;
+        var msg = String(errOrMsg.message || errOrMsg || '');
+        var name = String(errOrMsg.name || '');
+        return (
+          name === 'AbortError' ||
+          msg.includes('signal is aborted without reason') ||
+          msg.includes('The user aborted a request') ||
+          msg.includes('aborted') ||
+          msg.includes('WebSocket closed without opened') ||
+          msg.includes('failed to connect to websocket')
+        );
+      }
+
       window.addEventListener('unhandledrejection', function(event) {
-        var reason = event && event.reason;
-        var msg = reason ? String(reason.message || reason) : '';
-        if (msg.includes('WebSocket closed without opened') || msg.includes('failed to connect to websocket')) {
+        if (event && isBenignError(event.reason)) {
           event.preventDefault();
         }
       });
       window.addEventListener('error', function(event) {
-        var msg = event ? String(event.message || '') : '';
-        if (msg.includes('WebSocket closed without opened') || msg.includes('failed to connect to websocket')) {
+        if (event && (isBenignError(event.error) || isBenignError(event.message))) {
           event.preventDefault();
         }
       });
@@ -61,17 +72,22 @@
         console.error = function() {
           var args = Array.prototype.slice.call(arguments);
           var joined = args.map(function(arg) { return String(arg && arg.message ? arg.message : arg); }).join(' ');
-          if (joined.includes('[vite] failed to connect to websocket') || joined.includes('WebSocket closed without opened')) {
+          if (
+            joined.includes('[vite] failed to connect to websocket') ||
+            joined.includes('WebSocket closed without opened') ||
+            joined.includes('signal is aborted without reason') ||
+            joined.includes('The user aborted a request')
+          ) {
             return;
           }
           return origConsoleError.apply(console, arguments);
         };
       })();
     </script>
-    <title>AmarDokan – Smart Business Management System</title>
-    <meta name="description" content="A complete desktop business management and POS system with real-time voice conversations powered by Gemini Live API, sales, inventory, accounting, and reports." />
-    <meta property="og:title" content="AmarDokan – Smart Business Management System" />
-    <meta property="og:description" content="A complete desktop business management and POS system with real-time voice conversations powered by Gemini Live API, sales, inventory, accounting, and reports." />
+    <title>SobarDokan – Smart Business Management System</title>
+    <meta name="description" content="SobarDokan (সবার দোকান) – A complete business management and POS system with real-time voice conversations powered by Gemini Live API, sales, inventory, accounting, and reports." />
+    <meta property="og:title" content="SobarDokan – Smart Business Management System" />
+    <meta property="og:description" content="SobarDokan (সবার দোকান) – A complete business management and POS system with real-time voice conversations powered by Gemini Live API, sales, inventory, accounting, and reports." />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
     <link rel="preconnect" href="https://fonts.googleapis.com">

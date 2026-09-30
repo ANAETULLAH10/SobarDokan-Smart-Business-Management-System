@@ -4,7 +4,7 @@ import {
   SupplierLedgerEntry, StockAdjustment, Quotation, WarrantyItem,
   Employee, AttendanceRecord, BusinessSettings, UserProfile, User, Language, ThemeMode,
   MonthlyFinancialRecord, TrendDataPoint, SMSMessage, SMSTemplate, SMSSettings,
-  WarrantyClaim, AppUser, SubscriptionPlan, BillingInvoice, SupportTicket
+  WarrantyClaim, AppUser, SubscriptionPlan, BillingInvoice, SupportTicket, OwnerConfig
 } from '../types';
 import {
   defaultEmployees,
@@ -20,39 +20,54 @@ import { db } from './firebase';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 
 const STORAGE_KEYS = {
-  PRODUCTS: 'amardokan_products',
-  CATEGORIES: 'amardokan_categories',
-  CUSTOMERS: 'amardokan_customers',
-  SUPPLIERS: 'amardokan_suppliers',
-  SALES: 'amardokan_sales',
-  SALE_RETURNS: 'amardokan_sale_returns',
-  PURCHASES: 'amardokan_purchases',
-  PURCHASE_RETURNS: 'amardokan_purchase_returns',
-  EXPENSES: 'amardokan_expenses',
-  INCOMES: 'amardokan_incomes',
-  CUSTOMER_LEDGER: 'amardokan_customer_ledger',
-  SUPPLIER_LEDGER: 'amardokan_supplier_ledger',
-  STOCK_ADJUSTMENTS: 'amardokan_stock_adjustments',
-  QUOTATIONS: 'amardokan_quotations',
-  WARRANTIES: 'amardokan_warranties',
-  WARRANTY_CLAIMS: 'amardokan_warranty_claims',
-  EMPLOYEES: 'amardokan_employees',
-  ATTENDANCE: 'amardokan_attendance',
-  SETTINGS: 'amardokan_settings',
-  USER: 'amardokan_user',
-  USERS: 'amardokan_users',
-  SUBSCRIPTION: 'amardokan_subscription',
-  BILLING_INVOICES: 'amardokan_billing_invoices',
-  SUPPORT_TICKETS: 'amardokan_support_tickets',
-  LANGUAGE: 'amardokan_language',
-  THEME: 'amardokan_theme',
-  SMS_MESSAGES: 'amardokan_sms_messages',
-  SMS_TEMPLATES: 'amardokan_sms_templates',
-  SMS_SETTINGS: 'amardokan_sms_settings',
+  PRODUCTS: 'sobardokan_products',
+  CATEGORIES: 'sobardokan_categories',
+  CUSTOMERS: 'sobardokan_customers',
+  SUPPLIERS: 'sobardokan_suppliers',
+  SALES: 'sobardokan_sales',
+  SALE_RETURNS: 'sobardokan_sale_returns',
+  PURCHASES: 'sobardokan_purchases',
+  PURCHASE_RETURNS: 'sobardokan_purchase_returns',
+  EXPENSES: 'sobardokan_expenses',
+  INCOMES: 'sobardokan_incomes',
+  CUSTOMER_LEDGER: 'sobardokan_customer_ledger',
+  SUPPLIER_LEDGER: 'sobardokan_supplier_ledger',
+  STOCK_ADJUSTMENTS: 'sobardokan_stock_adjustments',
+  QUOTATIONS: 'sobardokan_quotations',
+  WARRANTIES: 'sobardokan_warranties',
+  WARRANTY_CLAIMS: 'sobardokan_warranty_claims',
+  EMPLOYEES: 'sobardokan_employees',
+  ATTENDANCE: 'sobardokan_attendance',
+  SETTINGS: 'sobardokan_settings',
+  USER: 'sobardokan_user',
+  USERS: 'sobardokan_registered_shops',
+  STAFF_USERS: 'sobardokan_staff_users',
+  OWNER_CONFIG: 'sobardokan_owner_config',
+  SUBSCRIPTION: 'sobardokan_subscription',
+  BILLING_INVOICES: 'sobardokan_billing_invoices',
+  SUPPORT_TICKETS: 'sobardokan_support_tickets',
+  LANGUAGE: 'sobardokan_language',
+  THEME: 'sobardokan_theme',
+  SMS_MESSAGES: 'sobardokan_sms_messages',
+  SMS_TEMPLATES: 'sobardokan_sms_templates',
+  SMS_SETTINGS: 'sobardokan_sms_settings',
+};
+
+export const defaultOwnerConfig: OwnerConfig = {
+  ownerEmail: 'mdanaetullah2021@gmail.com',
+  ownerName: 'MD ANAETULLAH (App Owner)',
+  ownerPhone: '01700-000000',
+  ownerWhatsApp: '8801700000000',
+  bKashNumber: '01700-000000 (Personal)',
+  nagadNumber: '01700-000000 (Personal)',
+  rocketNumber: '01700-000000',
+  monthlyPrice: 500,
+  yearlyPrice: 5000,
+  lifetimePrice: 9999,
 };
 
 export const defaultSettings: BusinessSettings = {
-  businessName: 'AmarDokan',
+  businessName: 'SobarDokan',
   businessSubtitle: 'SMART BUSINESS',
   ownerName: 'MD ANAETULLAH',
   phone: '01700-000000',
@@ -505,11 +520,19 @@ export class StorageService {
     }
   }
 
+  private static syncTimers: Record<string, any> = {};
+
   private static setItem<T>(key: string, value: T): void {
     try {
       localStorage.setItem(key, JSON.stringify(value));
-      // Best-effort async backup to Firestore
-      this.syncToFirestore(key, value);
+      // Debounced best-effort async backup to Firestore to prevent high-frequency write contention and AbortErrors
+      if (this.syncTimers[key]) {
+        clearTimeout(this.syncTimers[key]);
+      }
+      this.syncTimers[key] = setTimeout(() => {
+        delete this.syncTimers[key];
+        this.syncToFirestore(key, value).catch(() => {});
+      }, 800);
     } catch (e) {
       console.error(`Error saving ${key}:`, e);
     }
@@ -530,14 +553,19 @@ export class StorageService {
               const parsed = JSON.parse(raw);
               const ref = doc(db, 'app_state', storageKey);
               await setDoc(ref, { data: parsed, updatedAt: new Date().toISOString() }, { merge: true });
-            } catch (jsonErr) {
+            } catch {
               const ref = doc(db, 'app_state', storageKey);
-              await setDoc(ref, { data: raw, updatedAt: new Date().toISOString() }, { merge: true });
+              await setDoc(ref, { data: raw, updatedAt: new Date().toISOString() }, { merge: true }).catch(() => {});
             }
           }
         }
       }
-    } catch (err) {
+    } catch (err: any) {
+      const msg = String(err?.message || err || '');
+      const name = String(err?.name || '');
+      if (name === 'AbortError' || msg.includes('aborted') || msg.includes('signal is aborted')) {
+        return; // Safely ignore aborted network requests
+      }
       console.warn('Firestore sync note:', err);
     }
   }
@@ -546,16 +574,27 @@ export class StorageService {
     try {
       if (!navigator.onLine) return;
       for (const storageKey of Object.values(STORAGE_KEYS)) {
-        const ref = doc(db, 'app_state', storageKey);
-        const snapshot = await getDoc(ref);
-        if (snapshot.exists()) {
-          const val = snapshot.data()?.data;
-          if (val !== undefined) {
-            localStorage.setItem(storageKey, typeof val === 'string' ? val : JSON.stringify(val));
+        try {
+          const ref = doc(db, 'app_state', storageKey);
+          const snapshot = await getDoc(ref);
+          if (snapshot.exists()) {
+            const val = snapshot.data()?.data;
+            if (val !== undefined) {
+              localStorage.setItem(storageKey, typeof val === 'string' ? val : JSON.stringify(val));
+            }
           }
+        } catch (innerErr: any) {
+          const msg = String(innerErr?.message || '');
+          if (innerErr?.name === 'AbortError' || msg.includes('aborted')) continue;
+          throw innerErr;
         }
       }
-    } catch (err) {
+    } catch (err: any) {
+      const msg = String(err?.message || err || '');
+      const name = String(err?.name || '');
+      if (name === 'AbortError' || msg.includes('aborted') || msg.includes('signal is aborted')) {
+        return; // Safely ignore aborted network requests
+      }
       console.warn('Firestore pull note:', err);
     }
   }
@@ -587,7 +626,8 @@ export class StorageService {
 
   public static seedDemoData(): void {
     localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(defaultSettings));
-    localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(defaultUser));
+    // Do not set default logged in user, so new visitors land on Auth screen
+    localStorage.removeItem(STORAGE_KEYS.USER);
     localStorage.setItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(defaultCategories));
     localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(defaultProducts));
     localStorage.setItem(STORAGE_KEYS.CUSTOMERS, JSON.stringify(defaultCustomers));
@@ -1124,11 +1164,189 @@ export class StorageService {
 
   // User Profile
   public static getUser(): User | null {
-    return this.getItem<User | null>(STORAGE_KEYS.USER, defaultUser);
+    return this.getItem<User | null>(STORAGE_KEYS.USER, null);
   }
 
   public static saveUser(user: User | null): void {
     this.setItem(STORAGE_KEYS.USER, user);
+  }
+
+  // Owner Configuration & Master Controls
+  public static getOwnerConfig(): OwnerConfig {
+    return this.getItem<OwnerConfig>(STORAGE_KEYS.OWNER_CONFIG, defaultOwnerConfig);
+  }
+
+  public static saveOwnerConfig(config: OwnerConfig): void {
+    this.setItem(STORAGE_KEYS.OWNER_CONFIG, config);
+  }
+
+  public static getRegisteredUsers(): User[] {
+    const list = this.getItem<User[]>(STORAGE_KEYS.USERS, []);
+    if (list.length === 0) {
+      const now = new Date();
+      const samples: User[] = [
+        {
+          uid: 'usr-demo-1',
+          name: 'তানভীর আহমেদ',
+          businessName: 'মেসার্স তানভীর জেনারেল স্টোর',
+          email: 'tanvir.store@gmail.com',
+          phone: '01712-345678',
+          role: 'admin',
+          createdAt: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+          trialStartDate: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+          trialEndsAt: new Date(now.getTime() + 1 * 24 * 60 * 60 * 1000).toISOString(),
+          subscriptionStatus: 'trial',
+          subscriptionPlan: '3-Day Free Trial',
+        },
+        {
+          uid: 'usr-demo-2',
+          name: 'মো: জাহিদুল ইসলাম',
+          businessName: 'জাহিদ ইলেকট্রনিক্স অ্যান্ড টেলিকম',
+          email: 'zahid.telecom@gmail.com',
+          phone: '01819-876543',
+          role: 'admin',
+          createdAt: new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+          trialStartDate: new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+          trialEndsAt: new Date(now.getTime() + 20 * 24 * 60 * 60 * 1000).toISOString(),
+          subscriptionStatus: 'active',
+          subscriptionPlan: 'Business Pro (Monthly)',
+        },
+        {
+          uid: 'usr-demo-3',
+          name: 'কামাল উদ্দিন',
+          businessName: 'কামাল ব্রাদার্স ডিপার্টমেন্টাল স্টোর',
+          email: 'kamal.brothers@gmail.com',
+          phone: '01911-223344',
+          role: 'admin',
+          createdAt: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+          trialStartDate: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+          trialEndsAt: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+          subscriptionStatus: 'suspended',
+          subscriptionPlan: '3-Day Free Trial',
+        }
+      ];
+      this.setItem(STORAGE_KEYS.USERS, samples);
+      return samples;
+    }
+    return list;
+  }
+
+  public static saveRegisteredUser(user: User): void {
+    const list = this.getRegisteredUsers();
+    const idx = list.findIndex(u => u.uid === user.uid || (u.email && user.email && u.email.toLowerCase() === user.email.toLowerCase()));
+    if (idx >= 0) {
+      list[idx] = { ...list[idx], ...user };
+    } else {
+      list.unshift(user);
+    }
+    this.setItem(STORAGE_KEYS.USERS, list);
+
+    const current = this.getUser();
+    if (current && (current.uid === user.uid || (current.email && user.email && current.email.toLowerCase() === user.email.toLowerCase()))) {
+      this.saveUser({ ...current, ...user });
+    }
+  }
+
+  public static deleteRegisteredUser(uid: string): void {
+    const list = this.getRegisteredUsers().filter(u => u.uid !== uid);
+    this.setItem(STORAGE_KEYS.USERS, list);
+    const current = this.getUser();
+    if (current?.uid === uid) {
+      this.saveUser(null);
+    }
+  }
+
+  public static activateUserSubscription(uid: string, planName: string, days?: number): User | null {
+    const list = this.getRegisteredUsers();
+    const target = list.find(u => u.uid === uid);
+    if (!target) return null;
+
+    const now = new Date();
+    const expiresAt = days ? new Date(now.getTime() + days * 24 * 60 * 60 * 1000).toISOString() : new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000).toISOString();
+
+    const updated: User = {
+      ...target,
+      subscriptionStatus: 'active',
+      subscriptionPlan: planName,
+      trialEndsAt: expiresAt,
+    };
+    this.saveRegisteredUser(updated);
+    return updated;
+  }
+
+  public static suspendUserSubscription(uid: string): User | null {
+    const list = this.getRegisteredUsers();
+    const target = list.find(u => u.uid === uid);
+    if (!target) return null;
+
+    const updated: User = {
+      ...target,
+      subscriptionStatus: 'suspended',
+    };
+    this.saveRegisteredUser(updated);
+    return updated;
+  }
+
+  public static extendUserTrial(uid: string, daysToAdd: number): User | null {
+    const list = this.getRegisteredUsers();
+    const target = list.find(u => u.uid === uid);
+    if (!target) return null;
+
+    const currentExpiry = target.trialEndsAt ? new Date(target.trialEndsAt).getTime() : Date.now();
+    const baseTime = Math.max(Date.now(), currentExpiry);
+    const newExpiry = new Date(baseTime + daysToAdd * 24 * 60 * 60 * 1000).toISOString();
+
+    const updated: User = {
+      ...target,
+      subscriptionStatus: 'trial',
+      trialEndsAt: newExpiry,
+    };
+    this.saveRegisteredUser(updated);
+    return updated;
+  }
+
+  public static resetUserPassword(uid: string, newPass: string): User | null {
+    const list = this.getRegisteredUsers();
+    const target = list.find(u => u.uid === uid);
+    if (!target) return null;
+
+    const updated: User = {
+      ...target,
+      password: newPass,
+    };
+    this.saveRegisteredUser(updated);
+    return updated;
+  }
+
+  public static updateRegisteredUser(uid: string, updates: Partial<User>): User | null {
+    const list = this.getRegisteredUsers();
+    const target = list.find(u => u.uid === uid);
+    if (!target) return null;
+
+    const updated: User = {
+      ...target,
+      ...updates,
+    };
+    this.saveRegisteredUser(updated);
+    return updated;
+  }
+
+  public static findUserByEmail(email: string): User | undefined {
+    const list = this.getRegisteredUsers();
+    return list.find(u => u.email && u.email.toLowerCase() === email.trim().toLowerCase());
+  }
+
+  public static upgradeUserSubscription(planName: string): User | null {
+    const currentUser = this.getUser();
+    if (!currentUser) return null;
+    const updated: User = {
+      ...currentUser,
+      subscriptionStatus: 'active',
+      subscriptionPlan: planName,
+    };
+    this.saveUser(updated);
+    this.saveRegisteredUser(updated);
+    return updated;
   }
 
   // Employees & Attendance
@@ -1221,7 +1439,7 @@ export class StorageService {
 
   // App Team Users & Roles
   public static getAppUsers(): AppUser[] {
-    return this.getItem<AppUser[]>(STORAGE_KEYS.USERS, defaultAppUsers);
+    return this.getItem<AppUser[]>(STORAGE_KEYS.STAFF_USERS, defaultAppUsers);
   }
 
   public static saveAppUser(user: AppUser): void {
@@ -1232,12 +1450,12 @@ export class StorageService {
     } else {
       list.push(user);
     }
-    this.setItem(STORAGE_KEYS.USERS, list);
+    this.setItem(STORAGE_KEYS.STAFF_USERS, list);
   }
 
   public static deleteAppUser(id: string): void {
     const list = this.getAppUsers().filter(u => u.id !== id);
-    this.setItem(STORAGE_KEYS.USERS, list);
+    this.setItem(STORAGE_KEYS.STAFF_USERS, list);
   }
 
   // Subscription Plans & Billing Invoices

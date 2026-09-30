@@ -3,7 +3,7 @@ import {
   LayoutDashboard, ShoppingCart, Package, Users, Wallet,
   ShoppingBag, DollarSign, Banknote, BarChart3, Settings,
   Store, Zap, ChevronLeft, ChevronRight, X, MessageSquare,
-  Clock, ShieldCheck, CreditCard, Headphones, UserCheck, Sparkles
+  Clock, ShieldCheck, CreditCard, Headphones, UserCheck, Sparkles, Crown
 } from 'lucide-react';
 import { Language, TabType, User } from '../../types';
 import { translations } from '../../i18n/translations';
@@ -72,7 +72,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
         { id: 'customer_support' as TabType, label: t.customerSupport || (lang === 'bn' ? 'কাস্টমার সাপোর্ট' : 'Customer Support'), icon: Headphones },
         { id: 'settings' as TabType, label: t.settings, icon: Settings },
       ]
-    }
+    },
+    ...(user?.email === 'mdanaetullah2021@gmail.com' || user?.isOwner || user?.role === 'superadmin'
+      ? [
+          {
+            title: lang === 'bn' ? '👑 ওনার স্পেশাল' : '👑 OWNER MASTER',
+            items: [
+              {
+                id: 'owner_master' as TabType,
+                label: lang === 'bn' ? 'মাস্টার কন্ট্রোল প্যানেল' : 'Owner Master Panel',
+                icon: Crown,
+              },
+            ],
+          },
+        ]
+      : []),
   ];
 
   const userName = user?.name || (lang === 'bn' ? 'এডমিন' : 'Admin');

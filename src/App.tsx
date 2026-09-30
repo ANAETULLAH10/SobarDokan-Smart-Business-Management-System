@@ -26,6 +26,9 @@ import { VoiceConversationView } from './components/voice/VoiceConversationView'
 import { VoiceConversationModal } from './components/voice/VoiceConversationModal';
 import { ToastContainer } from './components/common/ToastContainer';
 import { PDFPreviewModal } from './components/common/PDFPreviewModal';
+import { AuthView } from './components/auth/AuthView';
+import { TrialSuspendedView } from './components/auth/TrialSuspendedView';
+import { OwnerMasterPanel } from './components/admin/OwnerMasterPanel';
 import { Sparkles } from 'lucide-react';
 
 import {
@@ -108,15 +111,30 @@ export const App: React.FC = () => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
+        const existing = StorageService.findUserByEmail(firebaseUser.email || '');
+        const now = new Date();
+        const threeDaysLater = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+        const isOwner = firebaseUser.email === 'mdanaetullah2021@gmail.com' || existing?.isOwner;
         const u: User = {
           uid: firebaseUser.uid,
-          name: firebaseUser.displayName || 'Admin',
+          name: firebaseUser.displayName || existing?.name || (isOwner ? 'MD ANAETULLAH' : 'দোকানদার'),
           email: firebaseUser.email || '',
           photoURL: firebaseUser.photoURL || undefined,
-          role: 'admin'
+          role: isOwner ? 'superadmin' : 'admin',
+          isOwner,
+          businessName: existing?.businessName || settings.businessName,
+          phone: existing?.phone || '',
+          createdAt: existing?.createdAt || now.toISOString(),
+          trialStartDate: existing?.trialStartDate || now.toISOString(),
+          trialEndsAt: isOwner
+            ? new Date(now.getTime() + 3650 * 24 * 60 * 60 * 1000).toISOString()
+            : existing?.trialEndsAt || threeDaysLater.toISOString(),
+          subscriptionStatus: isOwner ? 'active' : existing?.subscriptionStatus || 'trial',
+          subscriptionPlan: isOwner ? 'Lifetime Owner Unlimited' : existing?.subscriptionPlan || '3-Day Free Trial',
         };
         setUser(u);
         StorageService.saveUser(u);
+        StorageService.saveRegisteredUser(u);
 
         // Background sync to Firestore
         try {
@@ -128,14 +146,11 @@ export const App: React.FC = () => {
         } finally {
           setIsSyncing(false);
         }
-      } else {
-        setUser(null);
-        StorageService.saveUser(null);
       }
     });
 
     return () => unsubscribe();
-  }, [refreshAllState]);
+  }, [refreshAllState, settings.businessName]);
 
   // Global Keyboard Shortcuts (F1: POS, F2: Quick Sale, F3: Products)
   useEffect(() => {
@@ -359,8 +374,82 @@ export const App: React.FC = () => {
     billing_upgrade: lang === 'bn' ? 'বিলিং ও আপগ্রেড' : 'Billing & Upgrade',
     customer_support: lang === 'bn' ? 'কাস্টমার সাপোর্ট' : 'Customer Support',
     voice_assistant: lang === 'bn' ? 'ভয়েস কথোপকথন (Live)' : 'Voice Assistant (Live)',
-    settings: lang === 'bn' ? 'সেটিংস' : 'Settings'
+    settings: lang === 'bn' ? 'সেটিংস' : 'Settings',
+    owner_master: lang === 'bn' ? 'মালিক ও সুপার অ্যাডমিন প্যানেল' : 'Owner Master Control Panel'
   };
+
+  // Check if trial has expired
+  const isTrialExpired = (u: User | null): boolean => {
+    if (!u) return false;
+    // App Owner / Super Admin never expires
+    if (u.email === 'mdanaetullah2021@gmail.com' || u.role === 'superadmin' || u.isOwner) return false;
+    if (u.subscriptionStatus === 'active') return false;
+    if (u.subscriptionStatus === 'suspended' || u.subscriptionStatus === 'expired') return true;
+    if (!u.trialEndsAt) return false;
+    return Date.now() > new Date(u.trialEndsAt).getTime();
+  };
+
+  const getTrialRemainingText = (u: User) => {
+    if (!u.trialEndsAt) return lang === 'bn' ? '৩ দিন' : '3 days';
+    const diff = new Date(u.trialEndsAt).getTime() - Date.now();
+    if (diff <= 0) return lang === 'bn' ? 'মেয়াদ শেষ' : 'Expired';
+    const days = Math.floor(diff / (24 * 60 * 60 * 1000));
+    const hours = Math.floor((diff % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
+    if (days > 0) {
+      return lang === 'bn' ? `বাকি: ${days} দিন ${hours} ঘণ্টা` : `${days}d ${hours}h left`;
+    }
+    return lang === 'bn' ? `বাকি: ${hours} ঘণ্টা` : `${hours}h left`;
+  };
+
+  // If no user is logged in, show Auth View (Login / Registration)
+  if (!user) {
+    return (
+      <>
+        <AuthView
+          lang={lang}
+          settings={settings}
+          onLoginSuccess={(loggedInUser) => {
+            setUser(loggedInUser);
+            addToast({
+              type: 'success',
+              title: lang === 'bn' ? 'স্বাগতম!' : 'Welcome!',
+              message:
+                loggedInUser.subscriptionStatus === 'trial'
+                  ? (lang === 'bn'
+                      ? 'আপনার ৩ দিনের ফ্রি ট্রায়াল সক্রিয় রয়েছে।'
+                      : 'Your 3-day free trial is now active.')
+                  : (lang === 'bn' ? 'লগইন সফল হয়েছে।' : 'Successfully logged in.'),
+            });
+          }}
+          onUpdateSettings={setSettings}
+        />
+        <ToastContainer toasts={toasts} lang={lang} onDismiss={dismissToast} />
+      </>
+    );
+  }
+
+  // If trial has expired, show Trial Suspended View
+  if (isTrialExpired(user)) {
+    return (
+      <>
+        <TrialSuspendedView
+          user={user}
+          lang={lang}
+          settings={settings}
+          onUpgradeSuccess={(upgraded) => {
+            setUser(upgraded);
+            addToast({
+              type: 'success',
+              title: lang === 'bn' ? 'সাবস্ক্রিপশন সক্রিয়!' : 'Subscription Activated!',
+              message: lang === 'bn' ? 'আপনার প্যাকেজ সফলভাবে সক্রিয় হয়েছে।' : 'Your subscription has been renewed.',
+            });
+          }}
+          onLogout={handleLogout}
+        />
+        <ToastContainer toasts={toasts} lang={lang} onDismiss={dismissToast} />
+      </>
+    );
+  }
 
   return (
     <div className="flex h-screen bg-[#070b14] text-slate-100 font-sans overflow-hidden">
@@ -402,7 +491,28 @@ export const App: React.FC = () => {
           lowStockProducts={products.filter(p => p.currentStock <= p.minStockAlert)}
           onNavigateSettings={handleNavigateSettings}
           onOpenVoiceAssistant={() => setIsVoiceModalOpen(true)}
+          onNavigateOwnerMaster={() => setActiveTab('owner_master')}
         />
+
+        {/* Trial Active Banner for New Clients */}
+        {user?.subscriptionStatus === 'trial' && !user?.isOwner && user?.email !== 'mdanaetullah2021@gmail.com' && (
+          <div className="bg-gradient-to-r from-amber-600 via-indigo-600 to-purple-600 text-white px-4 py-2 text-xs sm:text-sm font-semibold flex items-center justify-between shadow-md z-30">
+            <div className="flex items-center gap-2 max-w-4xl">
+              <span className="animate-pulse text-base">⏳</span>
+              <span>
+                {lang === 'bn'
+                  ? `আপনার সবার দোকান ৩ দিনের ফ্রি ট্রায়াল চলছে (${getTrialRemainingText(user)})। সফটওয়্যারটি আনলিমিটেড ব্যবহার করতে প্যাকেজ আপগ্রেড করুন।`
+                  : `Your SobarDokan 3-Day Free Trial is active (${getTrialRemainingText(user)}). Upgrade your plan for full access.`}
+              </span>
+            </div>
+            <button
+              onClick={() => setActiveTab('billing_upgrade')}
+              className="ml-3 px-3 py-1 rounded-lg bg-white text-indigo-900 font-bold text-xs hover:bg-slate-100 transition whitespace-nowrap cursor-pointer shadow-sm"
+            >
+              {lang === 'bn' ? 'আপগ্রেড করুন' : 'Upgrade Plan'}
+            </button>
+          </div>
+        )}
 
         {/* View Router */}
         <main className="flex-1 overflow-y-auto bg-[#070b14]">
@@ -621,6 +731,15 @@ export const App: React.FC = () => {
               onLogin={handleLogin}
               onLogout={handleLogout}
               onResetData={handleResetData}
+            />
+          )}
+
+          {activeTab === 'owner_master' && (
+            <OwnerMasterPanel
+              currentUser={user}
+              lang={lang}
+              onNavigateTab={(tab) => setActiveTab(tab)}
+              onRefreshAllState={refreshAllState}
             />
           )}
         </main>

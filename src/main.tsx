@@ -9,6 +9,20 @@ try {
       configurable: true,
       enumerable: true
     });
+
+    window.addEventListener('unhandledrejection', (event) => {
+      const reason = event?.reason;
+      const msg = String(reason?.message || reason || '');
+      const name = String(reason?.name || '');
+      if (
+        name === 'AbortError' ||
+        msg.includes('signal is aborted without reason') ||
+        msg.includes('The user aborted a request') ||
+        msg.includes('aborted')
+      ) {
+        event.preventDefault();
+      }
+    });
   }
 } catch {
   // Ignore if already configured

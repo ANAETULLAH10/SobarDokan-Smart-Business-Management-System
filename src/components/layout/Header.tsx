@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
   Bell, Plus, Globe, Sun, Moon,
-  AlertTriangle, Check, RefreshCw, Menu, Zap, Sparkles
+  AlertTriangle, Check, RefreshCw, Menu, Zap, Sparkles, Crown
 } from 'lucide-react';
 import { Language, ThemeMode, User, Product } from '../../types';
 import { translations } from '../../i18n/translations';
@@ -25,6 +25,7 @@ interface HeaderProps {
   lowStockProducts?: Product[];
   onNavigateSettings?: (tab?: SettingsTabId) => void;
   onOpenVoiceAssistant?: () => void;
+  onNavigateOwnerMaster?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -43,7 +44,8 @@ export const Header: React.FC<HeaderProps> = ({
   onManualSync,
   lowStockProducts = [],
   onNavigateSettings,
-  onOpenVoiceAssistant
+  onOpenVoiceAssistant,
+  onNavigateOwnerMaster
 }) => {
   const t = translations[lang];
   const [notifOpen, setNotifOpen] = useState(false);
@@ -101,6 +103,20 @@ export const Header: React.FC<HeaderProps> = ({
           >
             <Sparkles className="w-3.5 h-3.5 text-cyan-200 animate-pulse" />
             <span className="hidden sm:inline">{lang === 'bn' ? 'ভয়েস AI' : 'Voice AI'}</span>
+          </button>
+        )}
+
+        {/* Trial Days Left Badge */}
+        {user?.subscriptionStatus === 'trial' && (
+          <button
+            onClick={() => onNavigateSettings?.('profile')}
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-300 text-xs font-bold transition active:scale-95 cursor-pointer"
+            title={lang === 'bn' ? '৩ দিনের ফ্রি ট্রায়াল সক্রিয়' : '3-Day Free Trial Active'}
+          >
+            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+            <span className="hidden sm:inline">
+              {lang === 'bn' ? '৩ দিনের ট্রায়াল' : '3-Day Trial'}
+            </span>
           </button>
         )}
 
@@ -225,6 +241,18 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
           )}
         </div>
+
+        {/* App Owner Master Control Button */}
+        {(user?.email === 'mdanaetullah2021@gmail.com' || user?.isOwner || user?.role === 'superadmin') && onNavigateOwnerMaster && (
+          <button
+            onClick={onNavigateOwnerMaster}
+            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/40 text-xs font-bold hover:bg-amber-500/30 transition shadow-sm cursor-pointer"
+            title={lang === 'bn' ? 'মালিক ও সুপার অ্যাডমিন কন্ট্রোল প্যানেল' : 'Owner Master Control Panel'}
+          >
+            <Crown className="w-3.5 h-3.5 text-amber-400" />
+            <span>{lang === 'bn' ? 'মালিক কন্ট্রোল' : 'Owner Master'}</span>
+          </button>
+        )}
 
         {/* User Account Menu: UserAvatarDropdown Component */}
         <UserAvatarDropdown

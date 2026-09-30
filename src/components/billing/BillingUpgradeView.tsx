@@ -77,6 +77,11 @@ export const BillingUpgradeView: React.FC<BillingUpgradeViewProps> = ({ lang, se
 
       StorageService.addBillingInvoice(newInvoice);
 
+      // Upgrade active user subscription plan
+      if (selectedPlan) {
+        StorageService.upgradeUserSubscription(selectedPlan.name);
+      }
+
       // If SMS bundle, add credits
       if (selectedSmsBundle) {
         StorageService.addSMSCredits(selectedSmsBundle.count);
