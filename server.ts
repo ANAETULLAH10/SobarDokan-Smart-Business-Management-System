@@ -197,7 +197,7 @@ async function generateContentWithResilience(
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  const PORT = Number(process.env.PORT) || 3000;
 
   app.use(express.json());
 
@@ -456,7 +456,10 @@ Respond fluently in Bengali or English depending on user query. Keep responses c
   // Vite middleware in dev / static in prod
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({
-      server: { middlewareMode: true },
+      server: {
+        middlewareMode: true,
+        hmr: { server },
+      },
       appType: 'spa',
     });
     app.use(vite.middlewares);

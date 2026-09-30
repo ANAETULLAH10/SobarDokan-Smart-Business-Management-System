@@ -687,7 +687,7 @@ export const App: React.FC = () => {
         <button
           id="btn-floating-voice-live"
           onClick={() => setIsVoiceModalOpen(true)}
-          className="fixed bottom-6 right-6 z-40 px-4 py-3 rounded-2xl bg-gradient-to-r from-cyan-600 via-indigo-600 to-purple-600 hover:from-cyan-500 hover:to-purple-500 text-white shadow-2xl shadow-indigo-950/80 hover:shadow-cyan-500/30 transition-all hover:scale-105 active:scale-95 flex items-center gap-2.5 group cursor-pointer border border-cyan-400/30"
+          className="fixed bottom-6 right-6 z-40 px-4 py-3 rounded-2xl bg-gradient-to-r from-cyan-600 via-indigo-600 to-purple-600 hover:from-cyan-500 hover:to-purple-500 text-white shadow-2xl shadow-indigo-950/80 hover:shadow-cyan-500/30 transition-all hover:scale-105 active:scale-95 flex items-center gap-2.5 group cursor-pointer border border-cyan-400/30 animate-bounce-slow"
           title={lang === 'bn' ? 'লাইভ ভয়েস সহকারী (gemini-3.8-live)' : 'Live Voice Assistant (gemini-3.8-live)'}
         >
           <div className="relative">

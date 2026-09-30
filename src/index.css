@@ -1,5 +1,22 @@
 @import "tailwindcss";
 
+@keyframes bounce-slow {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@theme {
+  --animate-bounce-slow: bounce-slow 3s ease-in-out infinite;
+}
+
+.animate-bounce-slow {
+  animation: bounce-slow 3s ease-in-out infinite;
+}
+
 @font-face {
   font-family: 'Noto Sans Bengali';
   src: url('/fonts/NotoSansBengali-Regular.ttf') format('truetype');

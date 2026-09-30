@@ -41,6 +41,33 @@
         }
       })();
     </script>
+    <script>
+      // Gracefully ignore Vite HMR WebSocket connection errors per AI Studio environment constraints (HMR disabled)
+      window.addEventListener('unhandledrejection', function(event) {
+        var reason = event && event.reason;
+        var msg = reason ? String(reason.message || reason) : '';
+        if (msg.includes('WebSocket closed without opened') || msg.includes('failed to connect to websocket')) {
+          event.preventDefault();
+        }
+      });
+      window.addEventListener('error', function(event) {
+        var msg = event ? String(event.message || '') : '';
+        if (msg.includes('WebSocket closed without opened') || msg.includes('failed to connect to websocket')) {
+          event.preventDefault();
+        }
+      });
+      (function() {
+        var origConsoleError = console.error;
+        console.error = function() {
+          var args = Array.prototype.slice.call(arguments);
+          var joined = args.map(function(arg) { return String(arg && arg.message ? arg.message : arg); }).join(' ');
+          if (joined.includes('[vite] failed to connect to websocket') || joined.includes('WebSocket closed without opened')) {
+            return;
+          }
+          return origConsoleError.apply(console, arguments);
+        };
+      })();
+    </script>
     <title>AmarDokan – Smart Business Management System</title>
     <meta name="description" content="A complete desktop business management and POS system with real-time voice conversations powered by Gemini Live API, sales, inventory, accounting, and reports." />
     <meta property="og:title" content="AmarDokan – Smart Business Management System" />
