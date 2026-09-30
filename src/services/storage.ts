@@ -4,7 +4,8 @@ import {
   SupplierLedgerEntry, StockAdjustment, Quotation, WarrantyItem,
   Employee, AttendanceRecord, BusinessSettings, UserProfile, User, Language, ThemeMode,
   MonthlyFinancialRecord, TrendDataPoint, SMSMessage, SMSTemplate, SMSSettings,
-  WarrantyClaim, AppUser, SubscriptionPlan, BillingInvoice, SupportTicket, OwnerConfig
+  WarrantyClaim, AppUser, SubscriptionPlan, BillingInvoice, SupportTicket, OwnerConfig,
+  AppFeatureModule, TabType
 } from '../types';
 import {
   defaultEmployees,
@@ -43,6 +44,7 @@ const STORAGE_KEYS = {
   USERS: 'sobardokan_registered_shops',
   STAFF_USERS: 'sobardokan_staff_users',
   OWNER_CONFIG: 'sobardokan_owner_config',
+  FEATURE_MODULES: 'sobardokan_feature_modules',
   SUBSCRIPTION: 'sobardokan_subscription',
   BILLING_INVOICES: 'sobardokan_billing_invoices',
   SUPPORT_TICKETS: 'sobardokan_support_tickets',
@@ -52,6 +54,142 @@ const STORAGE_KEYS = {
   SMS_TEMPLATES: 'sobardokan_sms_templates',
   SMS_SETTINGS: 'sobardokan_sms_settings',
 };
+
+export const defaultFeatureModules: AppFeatureModule[] = [
+  {
+    id: 'feat-pos',
+    tabId: 'pos',
+    nameBn: 'POS বিক্রয় ও ক্যাশ মেমো',
+    nameEn: 'POS Sales & Cash Memo',
+    category: 'core',
+    icon: 'ShoppingCart',
+    enabled: true,
+    description: 'দ্রুত পণ্য স্ক্যান, মেমো প্রিন্ট, ডিসকাউন্ট ও ক্যাশ/বিকাশ পেমেন্ট'
+  },
+  {
+    id: 'feat-products',
+    tabId: 'products',
+    nameBn: 'সকল পণ্য ও ইনভেন্টরি স্টক',
+    nameEn: 'Products & Inventory',
+    category: 'inventory',
+    icon: 'Package',
+    enabled: true,
+    description: 'পণ্য তালিকা, বারকোড, স্টক ওয়ার্নিং এবং ক্যাটাগরি ম্যানেজমেন্ট'
+  },
+  {
+    id: 'feat-purchases',
+    tabId: 'purchases',
+    nameBn: 'পণ্য ক্রয় ও সাপ্লায়ার সরবরাহ',
+    nameEn: 'Purchases & Supplies',
+    category: 'inventory',
+    icon: 'ShoppingBag',
+    enabled: true,
+    description: 'পাইকারি ক্রয়, সাপ্লায়ার বিল এবং স্টক স্বয়ংক্রিয় বৃদ্ধি'
+  },
+  {
+    id: 'feat-customers',
+    tabId: 'customers',
+    nameBn: 'কাস্টমার ডাটাবেজ',
+    nameEn: 'Customer Database',
+    category: 'finance',
+    icon: 'Users',
+    enabled: true,
+    description: 'কাস্টমারদের নাম, ফোন নম্বর, ঠিকানা এবং কেনাকাটার ইতিহাস'
+  },
+  {
+    id: 'feat-due',
+    tabId: 'due_khata',
+    nameBn: 'ডিজিটাল বকেয়া খাতা (Due Khata)',
+    nameEn: 'Digital Due Khata',
+    category: 'finance',
+    icon: 'Wallet',
+    enabled: true,
+    badge: 'Popular',
+    description: 'বকেয়া ট্র্যাক, তাগাদা রসিদ এবং কাস্টমার বাকি আদায় খাতা'
+  },
+  {
+    id: 'feat-suppliers',
+    tabId: 'suppliers',
+    nameBn: 'সাপ্লায়ার ও মহাজন খাতা',
+    nameEn: 'Suppliers Ledger',
+    category: 'finance',
+    icon: 'Users',
+    enabled: true,
+    description: 'সরবরাহকারী পাওনাদারদের তালিকা ও পেমেন্ট হিসাব'
+  },
+  {
+    id: 'feat-expenses',
+    tabId: 'expenses',
+    nameBn: 'দোকানের দৈনন্দিন খরচ (Expenses)',
+    nameEn: 'Store Expenses',
+    category: 'finance',
+    icon: 'DollarSign',
+    enabled: true,
+    description: 'দোকান ভাড়া, বিদ্যুৎ বিল, নাস্তা ও অন্যান্য দৈনিক খরচ'
+  },
+  {
+    id: 'feat-cashflow',
+    tabId: 'cash_flow',
+    nameBn: 'ক্যাশ ফ্লো ও ফান্ড হিসাব',
+    nameEn: 'Cash Flow & Accounts',
+    category: 'finance',
+    icon: 'Banknote',
+    enabled: true,
+    description: 'দৈনিক নগদ জমা-খরচ ও ব্যাংক ট্রানজেকশন ট্র্যাকিং'
+  },
+  {
+    id: 'feat-sms',
+    tabId: 'sms_center',
+    nameBn: 'SMS তাগাদা ও মার্কেটিং কেন্দ্র',
+    nameEn: 'SMS Notification Center',
+    category: 'admin',
+    icon: 'MessageSquare',
+    enabled: true,
+    badge: 'Hot',
+    description: 'কাস্টমারকে বাকি পরিশোধের এসএমএস ও অফার বার্তা পাঠানো'
+  },
+  {
+    id: 'feat-reports',
+    tabId: 'reports',
+    nameBn: 'রিপোর্ট ও লাভ-লোকসান অ্যানালিটিক্স',
+    nameEn: 'Reports & Analytics',
+    category: 'admin',
+    icon: 'BarChart3',
+    enabled: true,
+    description: 'আজকের ও মাসিক লাভ, বিক্রির গ্রাফ ও এক্সেল/PDF ডাউনলোড'
+  },
+  {
+    id: 'feat-attendance',
+    tabId: 'attendance',
+    nameBn: 'স্টাফ হাজিরা ও বেতন খাতা',
+    nameEn: 'Staff Attendance & Payroll',
+    category: 'admin',
+    icon: 'Clock',
+    enabled: true,
+    description: 'কর্মচারীদের দৈনিক উপস্থিতি, ছুটি ও বেতন হিসাব'
+  },
+  {
+    id: 'feat-warranty',
+    tabId: 'warranty_check',
+    nameBn: 'ওয়ারেন্টি চেকার ও সার্ভিসিং ক্লেইম',
+    nameEn: 'Warranty & Claims',
+    category: 'admin',
+    icon: 'ShieldCheck',
+    enabled: true,
+    description: 'সিরিয়াল নম্বর দিয়ে ওয়ারেন্টি চেক ও কাস্টমার ক্লেইম ট্র্যাকিং'
+  },
+  {
+    id: 'feat-voice',
+    tabId: 'voice_assistant',
+    nameBn: 'Gemini Live AI ভয়েস পার্টনার',
+    nameEn: 'Gemini Live AI Voice',
+    category: 'ai',
+    icon: 'Sparkles',
+    enabled: true,
+    badge: 'AI Smart',
+    description: 'মুখে বাংলায় কথা বলে হিসাব জানা, বিক্রি এন্ট্রি ও পরামর্শ'
+  }
+];
 
 export const defaultOwnerConfig: OwnerConfig = {
   ownerEmail: 'mdanaetullah2021@gmail.com',
@@ -1178,6 +1316,55 @@ export class StorageService {
 
   public static saveOwnerConfig(config: OwnerConfig): void {
     this.setItem(STORAGE_KEYS.OWNER_CONFIG, config);
+  }
+
+  // Feature Modules Management (SobarDokan Feature Controller)
+  public static getFeatureModules(): AppFeatureModule[] {
+    return this.getItem<AppFeatureModule[]>(STORAGE_KEYS.FEATURE_MODULES, defaultFeatureModules);
+  }
+
+  public static saveFeatureModules(modules: AppFeatureModule[]): void {
+    this.setItem(STORAGE_KEYS.FEATURE_MODULES, modules);
+  }
+
+  public static toggleFeatureModule(tabId: TabType, enabled: boolean): void {
+    const list = this.getFeatureModules();
+    const item = list.find(m => m.tabId === tabId);
+    if (item) {
+      item.enabled = enabled;
+      this.saveFeatureModules(list);
+    }
+  }
+
+  public static isFeatureEnabled(tabId: TabType): boolean {
+    if (tabId === 'dashboard' || tabId === 'settings' || tabId === 'owner_master') return true;
+    const list = this.getFeatureModules();
+    const item = list.find(m => m.tabId === tabId);
+    return item ? item.enabled : true;
+  }
+
+  public static addCustomFeatureModule(module: AppFeatureModule): void {
+    const list = this.getFeatureModules();
+    list.push(module);
+    this.saveFeatureModules(list);
+  }
+
+  public static updateFeatureModule(id: string, updates: Partial<AppFeatureModule>): void {
+    const list = this.getFeatureModules();
+    const index = list.findIndex(m => m.id === id || m.tabId === id);
+    if (index >= 0) {
+      list[index] = { ...list[index], ...updates };
+      this.saveFeatureModules(list);
+    }
+  }
+
+  public static deleteFeatureModule(id: string): void {
+    const list = this.getFeatureModules().filter(m => m.id !== id);
+    this.saveFeatureModules(list);
+  }
+
+  public static resetFeatureModules(): void {
+    this.saveFeatureModules(defaultFeatureModules);
   }
 
   public static getRegisteredUsers(): User[] {

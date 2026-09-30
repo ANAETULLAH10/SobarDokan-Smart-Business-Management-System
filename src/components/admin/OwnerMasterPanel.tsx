@@ -3,9 +3,10 @@ import {
   Crown, Store, Users, UserCheck, ShieldAlert, Clock, Search, Filter,
   Plus, Edit2, Trash2, CheckCircle2, XCircle, Key, RefreshCw, Phone,
   Mail, Calendar, DollarSign, ArrowUpRight, MessageSquare, Download,
-  Cloud, Save, Sparkles, AlertTriangle, ShieldCheck, Check, ChevronDown
+  Cloud, Save, Sparkles, AlertTriangle, ShieldCheck, Check, ChevronDown,
+  Sliders, Layers, Eye, EyeOff, RotateCcw
 } from 'lucide-react';
-import { User, Language, OwnerConfig } from '../../types';
+import { User, Language, OwnerConfig, AppFeatureModule, TabType } from '../../types';
 import { StorageService } from '../../services/storage';
 
 interface OwnerMasterPanelProps {
@@ -24,13 +25,25 @@ export const OwnerMasterPanel: React.FC<OwnerMasterPanelProps> = ({
   const isBn = lang === 'bn';
 
   // State
-  const [activeTab, setActiveTab] = useState<'shops' | 'payment_settings' | 'cloud_backup'>('shops');
+  const [activeTab, setActiveTab] = useState<'shops' | 'features' | 'payment_settings' | 'cloud_backup'>('shops');
   const [users, setUsers] = useState<User[]>(StorageService.getRegisteredUsers());
   const [ownerConfig, setOwnerConfig] = useState<OwnerConfig>(StorageService.getOwnerConfig());
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'trial' | 'active' | 'suspended'>('all');
   const [notification, setNotification] = useState<string | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
+
+  // Feature Modules State
+  const [featureModules, setFeatureModules] = useState<AppFeatureModule[]>(StorageService.getFeatureModules());
+  const [featureSearch, setFeatureSearch] = useState('');
+  const [featureCatFilter, setFeatureCatFilter] = useState<'all' | 'core' | 'inventory' | 'finance' | 'admin' | 'ai'>('all');
+  const [editingFeature, setEditingFeature] = useState<AppFeatureModule | null>(null);
+  const [isAddFeatureModalOpen, setIsAddFeatureModalOpen] = useState(false);
+  const [newFeatNameBn, setNewFeatNameBn] = useState('');
+  const [newFeatNameEn, setNewFeatNameEn] = useState('');
+  const [newFeatCategory, setNewFeatCategory] = useState<'core' | 'inventory' | 'finance' | 'admin' | 'ai'>('core');
+  const [newFeatTabId, setNewFeatTabId] = useState<TabType>('pos');
+  const [newFeatDesc, setNewFeatDesc] = useState('');
 
   // Modals state
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -257,6 +270,107 @@ export const OwnerMasterPanel: React.FC<OwnerMasterPanelProps> = ({
     showNotification(isBn ? 'মাস্টার ব্যাকআপ ফাইল ডাউনলোড সম্পন্ন হয়েছে!' : 'Master backup file downloaded!');
   };
 
+  // Feature module handlers
+  const refreshFeaturesList = () => {
+    setFeatureModules(StorageService.getFeatureModules());
+  };
+
+  const handleToggleFeature = (tabId: TabType, currentStatus: boolean) => {
+    StorageService.toggleFeatureModule(tabId, !currentStatus);
+    refreshFeaturesList();
+    onRefreshAllState();
+    showNotification(
+      isBn
+        ? `ফিচার ${!currentStatus ? 'সক্রিয় (সংযোজন)' : 'নিষ্ক্রিয় (বিয়োজন)'} করা হয়েছে!`
+        : `Feature ${!currentStatus ? 'Enabled' : 'Disabled'} successfully!`
+    );
+  };
+
+  const handleOpenEditFeature = (feat: AppFeatureModule) => {
+    setEditingFeature(feat);
+    setNewFeatNameBn(feat.nameBn);
+    setNewFeatNameEn(feat.nameEn);
+    setNewFeatDesc(feat.description);
+    setNewFeatCategory(feat.category);
+  };
+
+  const handleSaveFeatureEdit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingFeature) return;
+
+    StorageService.updateFeatureModule(editingFeature.id, {
+      nameBn: newFeatNameBn.trim() || editingFeature.nameBn,
+      nameEn: newFeatNameEn.trim() || editingFeature.nameEn,
+      description: newFeatDesc.trim(),
+      category: newFeatCategory,
+    });
+
+    refreshFeaturesList();
+    setEditingFeature(null);
+    onRefreshAllState();
+    showNotification(isBn ? 'ফিচার সফলভাবে পরিবর্তন করা হয়েছে!' : 'Feature updated successfully!');
+  };
+
+  const handleDeleteFeature = (id: string) => {
+    if (confirm(isBn ? 'আপনি কি নিশ্চিতভাবে এই ফিচারটি মুছে ফেলতে চান?' : 'Are you sure you want to delete this feature?')) {
+      StorageService.deleteFeatureModule(id);
+      refreshFeaturesList();
+      onRefreshAllState();
+      showNotification(isBn ? 'ফিচার মুছে ফেলা হয়েছে!' : 'Feature deleted!');
+    }
+  };
+
+  const handleResetFeatures = () => {
+    if (confirm(isBn ? 'সকল ফিচার ডিফল্ট অবস্থায় রিস্টোর করতে চান?' : 'Reset all features to factory defaults?')) {
+      StorageService.resetFeatureModules();
+      refreshFeaturesList();
+      onRefreshAllState();
+      showNotification(isBn ? 'সকল ফিচার ডিফল্ট অবস্থায় রিস্টোর হয়েছে!' : 'Features reset to defaults!');
+    }
+  };
+
+  const handleAddFeatureSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newFeatNameBn.trim()) return;
+
+    const newModule: AppFeatureModule = {
+      id: 'custom-' + Date.now(),
+      tabId: newFeatTabId,
+      nameBn: newFeatNameBn.trim(),
+      nameEn: newFeatNameEn.trim() || newFeatNameBn.trim(),
+      category: newFeatCategory,
+      icon: 'Layers',
+      enabled: true,
+      description: newFeatDesc.trim() || 'Custom feature module',
+      badge: 'Custom',
+      isCustom: true,
+    };
+
+    StorageService.addCustomFeatureModule(newModule);
+    refreshFeaturesList();
+    setIsAddFeatureModalOpen(false);
+    setNewFeatNameBn('');
+    setNewFeatNameEn('');
+    setNewFeatDesc('');
+    onRefreshAllState();
+    showNotification(isBn ? 'নতুন ফিচার সফলভাবে সংযোজন করা হয়েছে!' : 'New feature added successfully!');
+  };
+
+  // Filtered feature modules
+  const filteredFeatures = featureModules.filter((f) => {
+    const q = featureSearch.toLowerCase().trim();
+    const matchSearch =
+      !q ||
+      f.nameBn.toLowerCase().includes(q) ||
+      f.nameEn.toLowerCase().includes(q) ||
+      f.description.toLowerCase().includes(q) ||
+      f.tabId.toLowerCase().includes(q);
+
+    if (!matchSearch) return false;
+    if (featureCatFilter === 'all') return true;
+    return f.category === featureCatFilter;
+  });
+
   // Helper remaining days
   const getRemainingTime = (u: User) => {
     if (u.subscriptionStatus === 'active') {
@@ -391,6 +505,19 @@ export const OwnerMasterPanel: React.FC<OwnerMasterPanelProps> = ({
           <Store className="w-4 h-4" />
           <span>{isBn ? 'সকল দোকান ও ক্লায়েন্ট তালিকা' : 'All Client Stores'}</span>
           <span className="ml-1 text-xs px-2 py-0.5 rounded-full bg-white/20">{users.length}</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('features')}
+          className={`px-5 py-2.5 rounded-xl font-bold text-sm transition flex items-center gap-2 cursor-pointer ${
+            activeTab === 'features'
+              ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/25'
+              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+          }`}
+        >
+          <Sliders className="w-4 h-4" />
+          <span>{isBn ? 'ফিচার ও অপশন নিয়ন্ত্রণ' : 'Feature & Option Controls'}</span>
+          <span className="ml-1 text-xs px-2 py-0.5 rounded-full bg-white/20">{featureModules.length}</span>
         </button>
 
         <button
@@ -660,7 +787,164 @@ export const OwnerMasterPanel: React.FC<OwnerMasterPanelProps> = ({
         </div>
       )}
 
-      {/* TAB 2: OWNER PAYMENT & PRICING SETTINGS */}
+      {/* TAB 2: FEATURES & OPTIONS CONTROLLER */}
+      {activeTab === 'features' && (
+        <div className="space-y-5">
+          {/* Controls Bar */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+            {/* Search */}
+            <div className="relative flex-1">
+              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                placeholder={isBn ? 'ফিচারের নাম, আইডি বা বিবরণ খুঁজুন...' : 'Search features by name or ID...'}
+                value={featureSearch}
+                onChange={(e) => setFeatureSearch(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+
+            {/* Category Filter Pills */}
+            <div className="flex items-center gap-1.5 overflow-x-auto">
+              {[
+                { id: 'all', label: isBn ? 'সকল' : 'All' },
+                { id: 'core', label: isBn ? 'মূল' : 'Core' },
+                { id: 'inventory', label: isBn ? 'ইনভেন্টরি' : 'Inventory' },
+                { id: 'finance', label: isBn ? 'হিসাব' : 'Finance' },
+                { id: 'admin', label: isBn ? 'অ্যাডমিন' : 'Admin' },
+                { id: 'ai', label: isBn ? 'AI Smart' : 'AI' },
+              ].map((cat) => (
+                <button
+                  key={cat.id}
+                  onClick={() => setFeatureCatFilter(cat.id as any)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer whitespace-nowrap ${
+                    featureCatFilter === cat.id
+                      ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900'
+                      : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
+                  }`}
+                >
+                  {cat.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Action buttons */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleResetFeatures}
+                className="px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
+                title={isBn ? 'ডিফল্ট ফিচারে ফিরিয়ে নিন' : 'Reset to defaults'}
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>{isBn ? 'ডিফল্ট রিস্টোর' : 'Reset'}</span>
+              </button>
+
+              <button
+                onClick={() => setIsAddFeatureModalOpen(true)}
+                className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold transition flex items-center gap-2 shadow-md shadow-purple-600/30 cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                <span>{isBn ? 'নতুন অপশন যোগ' : 'Add Option'}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Quick Info Banner */}
+          <div className="p-4 rounded-2xl bg-indigo-50/60 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/40 flex flex-wrap items-center justify-between gap-3 text-xs text-indigo-800 dark:text-indigo-300">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-indigo-500" />
+              <span>
+                {isBn
+                  ? 'মালিক হিসেবে আপনি সবার দোকানের যেকোনো অপশন বা ফিচার চালু/বন্ধ (সংযোজন/বিয়োজন) এবং নাম পরিবর্তন করতে পারবেন।'
+                  : 'As owner, toggle modules ON/OFF or customize their Bangla & English names across SobarDokan.'}
+              </span>
+            </div>
+            <div className="flex items-center gap-3 font-bold">
+              <span>{featureModules.filter((f) => f.enabled).length} {isBn ? 'সক্রিয়' : 'Active'}</span>
+              <span>•</span>
+              <span className="text-slate-500">{featureModules.filter((f) => !f.enabled).length} {isBn ? 'নিষ্ক্রিয়' : 'Disabled'}</span>
+            </div>
+          </div>
+
+          {/* Features Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+            {filteredFeatures.map((feat) => (
+              <div
+                key={feat.id}
+                className={`p-4 rounded-2xl border transition-all shadow-sm flex flex-col justify-between space-y-3 ${
+                  feat.enabled
+                    ? 'bg-white dark:bg-slate-900 border-indigo-200 dark:border-indigo-900/50'
+                    : 'bg-slate-50/80 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 opacity-75'
+                }`}
+              >
+                <div>
+                  <div className="flex items-center justify-between gap-2 mb-2">
+                    <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                      {feat.category}
+                    </span>
+                    {feat.badge && (
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300">
+                        {feat.badge}
+                      </span>
+                    )}
+                  </div>
+
+                  <h4 className="text-sm font-bold text-slate-900 dark:text-white flex items-center justify-between">
+                    <span>{isBn ? feat.nameBn : feat.nameEn}</span>
+                    <span className="text-[11px] text-slate-400 font-mono font-normal">#{feat.tabId}</span>
+                  </h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mt-1">
+                    {feat.description}
+                  </p>
+                </div>
+
+                <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5">
+                    {/* Toggle Button */}
+                    <button
+                      onClick={() => handleToggleFeature(feat.tabId, feat.enabled)}
+                      className={`px-3 py-1.5 rounded-xl font-bold text-xs transition flex items-center gap-1.5 cursor-pointer ${
+                        feat.enabled
+                          ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
+                          : 'bg-slate-200 dark:bg-slate-800 text-slate-500 border border-slate-300 dark:border-slate-700'
+                      }`}
+                    >
+                      <span className={`w-2 h-2 rounded-full ${feat.enabled ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`} />
+                      <span>{feat.enabled ? (isBn ? 'সক্রিয় (ON)' : 'Active') : (isBn ? 'নিষ্ক্রিয় (OFF)' : 'Inactive')}</span>
+                    </button>
+
+                    {/* Edit button */}
+                    <button
+                      onClick={() => handleOpenEditFeature(feat)}
+                      className="p-1.5 rounded-xl text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-slate-800 transition cursor-pointer"
+                      title={isBn ? 'নাম ও বিবরণ পরিবর্তন করুন' : 'Edit name & details'}
+                    >
+                      <Edit2 className="w-3.5 h-3.5" />
+                    </button>
+
+                    {/* Delete custom button */}
+                    {feat.isCustom && (
+                      <button
+                        onClick={() => handleDeleteFeature(feat.id)}
+                        className="p-1.5 rounded-xl text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-slate-800 transition cursor-pointer"
+                        title={isBn ? 'মুছে ফেলুন' : 'Delete'}
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+
+                  <span className="text-[10px] text-slate-400">
+                    {feat.nameEn !== feat.nameBn ? feat.nameEn : ''}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* TAB 3: OWNER PAYMENT & PRICING SETTINGS */}
       {activeTab === 'payment_settings' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
@@ -1384,6 +1668,247 @@ export const OwnerMasterPanel: React.FC<OwnerMasterPanelProps> = ({
                 {isBn ? 'হ্যাঁ, ডিলিট করুন' : 'Delete Permanently'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: EDIT FEATURE */}
+      {editingFeature && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center">
+                  <Edit2 className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base text-slate-900 dark:text-white">
+                    {isBn ? 'ফিচার পরিবর্তন ও সম্পাদনা' : 'Edit Feature Module'}
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    #{editingFeature.tabId}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setEditingFeature(null)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveFeatureEdit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  {isBn ? 'ফিচারের নাম (বাংলা) *' : 'Feature Name (Bangla) *'}
+                </label>
+                <input
+                  type="text"
+                  value={newFeatNameBn}
+                  onChange={(e) => setNewFeatNameBn(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm focus:ring-2 focus:ring-indigo-500"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  {isBn ? 'ফিচারের নাম (ইংরেজি)' : 'Feature Name (English)'}
+                </label>
+                <input
+                  type="text"
+                  value={newFeatNameEn}
+                  onChange={(e) => setNewFeatNameEn(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  {isBn ? 'ক্যাটাগরি' : 'Category'}
+                </label>
+                <select
+                  value={newFeatCategory}
+                  onChange={(e) => setNewFeatCategory(e.target.value as any)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm focus:ring-2 focus:ring-indigo-500"
+                >
+                  <option value="core">Core / মূল কার্যক্রম</option>
+                  <option value="inventory">Inventory / ইনভেন্টরি ও স্টক</option>
+                  <option value="finance">Finance / হিসাব ও লেজার</option>
+                  <option value="admin">Admin / অ্যাডমিন ও সিকিউরিটি</option>
+                  <option value="ai">AI Smart / কৃত্রিম বুদ্ধিমত্তা</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  {isBn ? 'বিবরণ' : 'Description'}
+                </label>
+                <textarea
+                  rows={2}
+                  value={newFeatDesc}
+                  onChange={(e) => setNewFeatDesc(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm focus:ring-2 focus:ring-indigo-500 resize-none"
+                />
+              </div>
+
+              <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800">
+                {editingFeature.isCustom ? (
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteFeature(editingFeature.id)}
+                    className="px-3.5 py-2 rounded-xl bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400 text-xs font-bold hover:bg-rose-100 transition flex items-center gap-1.5"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>{isBn ? 'মুছে ফেলুন' : 'Delete'}</span>
+                  </button>
+                ) : <div />}
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setEditingFeature(null)}
+                    className="px-4 py-2.5 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-sm font-semibold transition"
+                  >
+                    {isBn ? 'বাতিল' : 'Cancel'}
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold transition shadow-md shadow-indigo-600/30"
+                  >
+                    {isBn ? 'সংরক্ষণ করুন' : 'Save Changes'}
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: ADD CUSTOM FEATURE */}
+      {isAddFeatureModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-purple-600 text-white flex items-center justify-center">
+                  <Plus className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base text-slate-900 dark:text-white">
+                    {isBn ? 'নতুন ফিচার / অপশন সংযোজন' : 'Add New Feature Option'}
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    {isBn ? 'সবার দোকানে নতুন কোনো মডিউল যুক্ত করুন' : 'Add new tool to SobarDokan'}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsAddFeatureModalOpen(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleAddFeatureSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  {isBn ? 'ফিচারের নাম (বাংলা) *' : 'Feature Name (Bangla) *'}
+                </label>
+                <input
+                  type="text"
+                  value={newFeatNameBn}
+                  onChange={(e) => setNewFeatNameBn(e.target.value)}
+                  placeholder="যেমন: বিশেষ পাইকারি সেল"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm focus:ring-2 focus:ring-purple-500"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  {isBn ? 'ফিচারের নাম (ইংরেজি)' : 'Feature Name (English)'}
+                </label>
+                <input
+                  type="text"
+                  value={newFeatNameEn}
+                  onChange={(e) => setNewFeatNameEn(e.target.value)}
+                  placeholder="e.g. Special Wholesale"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm focus:ring-2 focus:ring-purple-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    {isBn ? 'ক্যাটাগরি' : 'Category'}
+                  </label>
+                  <select
+                    value={newFeatCategory}
+                    onChange={(e) => setNewFeatCategory(e.target.value as any)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm focus:ring-2 focus:ring-purple-500"
+                  >
+                    <option value="core">Core / মূল</option>
+                    <option value="inventory">Inventory / ইনভেন্টরি</option>
+                    <option value="finance">Finance / হিসাব</option>
+                    <option value="admin">Admin / অ্যাডমিন</option>
+                    <option value="ai">AI Smart</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    {isBn ? 'লিংকড মডিউল' : 'Linked Tab'}
+                  </label>
+                  <select
+                    value={newFeatTabId}
+                    onChange={(e) => setNewFeatTabId(e.target.value as any)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm focus:ring-2 focus:ring-purple-500"
+                  >
+                    <option value="pos">POS বিক্রয়</option>
+                    <option value="products">পণ্য স্টক</option>
+                    <option value="purchases">ক্রয় ও সরবরাহ</option>
+                    <option value="customers">কাস্টমার</option>
+                    <option value="due_khata">বকেয়া খাতা</option>
+                    <option value="sms_center">SMS সেন্টার</option>
+                    <option value="reports">রিপোর্ট</option>
+                    <option value="warranty_check">ওয়ারেন্টি</option>
+                    <option value="voice_assistant">AI ভয়েস</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  {isBn ? 'বিবরণ' : 'Description'}
+                </label>
+                <textarea
+                  rows={2}
+                  value={newFeatDesc}
+                  onChange={(e) => setNewFeatDesc(e.target.value)}
+                  placeholder="এই ফিচারের মাধ্যমে দোকানদার কী করতে পারবে..."
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm focus:ring-2 focus:ring-purple-500 resize-none"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setIsAddFeatureModalOpen(false)}
+                  className="px-4 py-2.5 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-sm font-semibold transition"
+                >
+                  {isBn ? 'বাতিল' : 'Cancel'}
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-sm font-bold transition shadow-md shadow-purple-600/30"
+                >
+                  {isBn ? 'সংযোজন করুন' : 'Add Option'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

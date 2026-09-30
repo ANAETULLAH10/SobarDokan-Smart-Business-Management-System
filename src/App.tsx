@@ -170,17 +170,24 @@ export const App: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [activeTab]);
 
-  // Stock alert threshold notification whenever user navigates to Dashboard
+  // Stock alert threshold notification whenever logged-in user is on Dashboard
+  // CRITICAL: Absolutely never show on login/auth view or when user is not logged in!
   useEffect(() => {
-    if (activeTab === 'dashboard') {
-      const lowStockItems = products.filter(
-        (p) => p.currentStock <= (p.minStockAlert ?? 5)
-      );
+    if (!user || activeTab !== 'dashboard') {
+      dismissToast('low-stock-dashboard-alert');
+      return;
+    }
 
-      if (lowStockItems.length > 0) {
-        const outOfStockCount = lowStockItems.filter((p) => p.currentStock <= 0).length;
+    const lowStockItems = products.filter(
+      (p) => p.currentStock <= (p.minStockAlert ?? 5)
+    );
 
-        const timer = setTimeout(() => {
+    if (lowStockItems.length > 0) {
+      const outOfStockCount = lowStockItems.filter((p) => p.currentStock <= 0).length;
+
+      const timer = setTimeout(() => {
+        // Ensure user is still actively logged in before adding toast
+        if (StorageService.getUser()) {
           addToast({
             id: 'low-stock-dashboard-alert',
             type: 'warning',
@@ -210,14 +217,24 @@ export const App: React.FC = () => {
             },
             duration: 8500
           });
-        }, 250);
+        }
+      }, 500);
 
-        return () => clearTimeout(timer);
-      } else {
-        dismissToast('low-stock-dashboard-alert');
+      return () => clearTimeout(timer);
+    } else {
+      dismissToast('low-stock-dashboard-alert');
+    }
+  }, [user, activeTab, products, lang, addToast, dismissToast]);
+
+  // Ensure that if user logs out or is on auth view, all stock alerts and toasts are cleared
+  useEffect(() => {
+    if (!user) {
+      dismissToast('low-stock-dashboard-alert');
+      if (toasts.length > 0) {
+        setToasts([]);
       }
     }
-  }, [activeTab, products, lang, addToast, dismissToast]);
+  }, [user, toasts.length, dismissToast]);
 
   // Apply Day / Night mood class to document root
   useEffect(() => {
@@ -268,11 +285,13 @@ export const App: React.FC = () => {
   const handleLogout = async () => {
     try {
       await signOut(auth);
-      setUser(null);
-      StorageService.saveUser(null);
     } catch (err) {
       console.error('Logout error:', err);
     }
+    setUser(null);
+    StorageService.saveUser(null);
+    dismissToast('low-stock-dashboard-alert');
+    setToasts([]);
   };
 
   const handleManualSync = async () => {
@@ -404,27 +423,24 @@ export const App: React.FC = () => {
   // If no user is logged in, show Auth View (Login / Registration)
   if (!user) {
     return (
-      <>
-        <AuthView
-          lang={lang}
-          settings={settings}
-          onLoginSuccess={(loggedInUser) => {
-            setUser(loggedInUser);
-            addToast({
-              type: 'success',
-              title: lang === 'bn' ? 'স্বাগতম!' : 'Welcome!',
-              message:
-                loggedInUser.subscriptionStatus === 'trial'
-                  ? (lang === 'bn'
-                      ? 'আপনার ৩ দিনের ফ্রি ট্রায়াল সক্রিয় রয়েছে।'
-                      : 'Your 3-day free trial is now active.')
-                  : (lang === 'bn' ? 'লগইন সফল হয়েছে।' : 'Successfully logged in.'),
-            });
-          }}
-          onUpdateSettings={setSettings}
-        />
-        <ToastContainer toasts={toasts} lang={lang} onDismiss={dismissToast} />
-      </>
+      <AuthView
+        lang={lang}
+        settings={settings}
+        onLoginSuccess={(loggedInUser) => {
+          setUser(loggedInUser);
+          addToast({
+            type: 'success',
+            title: lang === 'bn' ? 'স্বাগতম!' : 'Welcome!',
+            message:
+              loggedInUser.subscriptionStatus === 'trial'
+                ? (lang === 'bn'
+                    ? 'আপনার ৩ দিনের ফ্রি ট্রায়াল সক্রিয় রয়েছে।'
+                    : 'Your 3-day free trial is now active.')
+                : (lang === 'bn' ? 'লগইন সফল হয়েছে।' : 'Successfully logged in.'),
+          });
+        }}
+        onUpdateSettings={setSettings}
+      />
     );
   }
 

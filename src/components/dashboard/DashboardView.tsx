@@ -4,10 +4,11 @@ import {
   Calendar, TrendingUp, TrendingDown, ArrowRight, Store,
   DollarSign, PackageCheck, AlertCircle
 } from 'lucide-react';
-import { Language, BusinessSettings, Product, Sale, TabType, Customer, Purchase, Expense } from '../../types';
+import { Language, BusinessSettings, Product, Sale, TabType, Customer, Purchase, Expense, User } from '../../types';
 import { translations } from '../../i18n/translations';
 import { StorageService } from '../../services/storage';
 import { DashboardTrendChart } from './DashboardTrendChart';
+import { OwnerFeatureToolbar } from '../admin/OwnerFeatureToolbar';
 
 interface DashboardViewProps {
   lang: Language;
@@ -17,6 +18,8 @@ interface DashboardViewProps {
   sales: Sale[];
   purchases?: Purchase[];
   expenses?: Expense[];
+  currentUser?: User | null;
+  onRefreshAllState?: () => void;
   onNavigate?: (tab: TabType) => void;
   onOpenAddProduct: () => void;
   onOpenAddPurchase?: () => void;
@@ -33,6 +36,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   products,
   sales,
   expenses = [],
+  currentUser = null,
+  onRefreshAllState,
   onNavigate,
   onOpenAddProduct,
   onOpenAddPurchase,

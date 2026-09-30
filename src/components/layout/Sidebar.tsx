@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { Language, TabType, User } from '../../types';
 import { translations } from '../../i18n/translations';
+import { StorageService } from '../../services/storage';
 
 interface SidebarProps {
   activeTab: TabType;
@@ -32,48 +33,61 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onOpenQuickSale
 }) => {
   const t = translations[lang];
+  const isOwner = user?.email === 'mdanaetullah2021@gmail.com' || user?.isOwner || user?.role === 'superadmin';
+  const featureModules = StorageService.getFeatureModules();
 
-  const menuSections = [
+  const getModuleLabel = (tabId: TabType, defaultLabel: string) => {
+    const mod = featureModules.find(m => m.tabId === tabId);
+    if (!mod) return defaultLabel;
+    return lang === 'bn' ? (mod.nameBn || defaultLabel) : (mod.nameEn || defaultLabel);
+  };
+
+  const isTabAllowed = (tabId: TabType) => {
+    if (isOwner) return true;
+    return StorageService.isFeatureEnabled(tabId);
+  };
+
+  const rawMenuSections = [
     {
       title: lang === 'bn' ? 'প্রধান কার্যক্রম' : 'Core Business',
       items: [
-        { id: 'dashboard' as TabType, label: t.dashboard, icon: LayoutDashboard },
-        { id: 'pos' as TabType, label: t.pos, icon: ShoppingCart },
-        { id: 'voice_assistant' as TabType, label: lang === 'bn' ? 'ভয়েস কথোপকথন' : 'Voice Assistant', icon: Sparkles },
-        { id: 'sales' as TabType, label: lang === 'bn' ? 'বিক্রয় তালিকা ও ফেরত' : 'Sales & Returns', icon: ShoppingBag },
-        { id: 'due_khata' as TabType, label: t.dueKhata, icon: Wallet },
+        { id: 'dashboard' as TabType, label: getModuleLabel('dashboard', t.dashboard), icon: LayoutDashboard },
+        { id: 'pos' as TabType, label: getModuleLabel('pos', t.pos), icon: ShoppingCart },
+        { id: 'voice_assistant' as TabType, label: getModuleLabel('voice_assistant', lang === 'bn' ? 'ভয়েস কথোপকথন' : 'Voice Assistant'), icon: Sparkles },
+        { id: 'sales' as TabType, label: getModuleLabel('sales', lang === 'bn' ? 'বিক্রয় তালিকা ও ফেরত' : 'Sales & Returns'), icon: ShoppingBag },
+        { id: 'due_khata' as TabType, label: getModuleLabel('due_khata', t.dueKhata), icon: Wallet },
       ]
     },
     {
       title: lang === 'bn' ? 'ইনভেন্টরি ও ক্রয়' : 'Inventory & Purchase',
       items: [
-        { id: 'products' as TabType, label: lang === 'bn' ? 'সকল পণ্য' : 'All Products', icon: Package },
-        { id: 'purchases' as TabType, label: lang === 'bn' ? 'ক্রয় ও সরবরাহ' : 'Purchases & Supplies', icon: ShoppingBag },
-        { id: 'suppliers' as TabType, label: lang === 'bn' ? 'সরবরাহকারী' : 'Suppliers', icon: Users },
+        { id: 'products' as TabType, label: getModuleLabel('products', lang === 'bn' ? 'সকল পণ্য' : 'All Products'), icon: Package },
+        { id: 'purchases' as TabType, label: getModuleLabel('purchases', lang === 'bn' ? 'ক্রয় ও সরবরাহ' : 'Purchases & Supplies'), icon: ShoppingBag },
+        { id: 'suppliers' as TabType, label: getModuleLabel('suppliers', lang === 'bn' ? 'সরবরাহকারী' : 'Suppliers'), icon: Users },
       ]
     },
     {
       title: lang === 'bn' ? 'হিসাব ও অর্থ' : 'Finance & Ledger',
       items: [
-        { id: 'customers' as TabType, label: t.customers, icon: Users },
-        { id: 'expenses' as TabType, label: t.expenses, icon: DollarSign },
-        { id: 'cash_flow' as TabType, label: t.cashFlow, icon: Banknote },
-        { id: 'sms_center' as TabType, label: t.smsCenter || (lang === 'bn' ? 'SMS কেন্দ্র' : 'SMS Center'), icon: MessageSquare },
+        { id: 'customers' as TabType, label: getModuleLabel('customers', t.customers), icon: Users },
+        { id: 'expenses' as TabType, label: getModuleLabel('expenses', t.expenses), icon: DollarSign },
+        { id: 'cash_flow' as TabType, label: getModuleLabel('cash_flow', t.cashFlow), icon: Banknote },
+        { id: 'sms_center' as TabType, label: getModuleLabel('sms_center', t.smsCenter || (lang === 'bn' ? 'SMS কেন্দ্র' : 'SMS Center')), icon: MessageSquare },
       ]
     },
     {
       title: t.admin || (lang === 'bn' ? 'অ্যাডমিন' : 'ADMIN'),
       items: [
-        { id: 'attendance' as TabType, label: t.attendance || 'Attendance', icon: Clock },
-        { id: 'warranty_check' as TabType, label: t.warrantyCheck || 'Warranty Check', icon: ShieldCheck },
-        { id: 'reports' as TabType, label: t.reports, icon: BarChart3 },
-        { id: 'users_management' as TabType, label: t.userManagement || (lang === 'bn' ? 'ইউজার ম্যানেজমেন্ট' : 'User Management'), icon: Users },
-        { id: 'billing_upgrade' as TabType, label: t.billingUpgrade || (lang === 'bn' ? 'বিলিং ও আপগ্রেড' : 'Billing & Upgrade'), icon: CreditCard },
-        { id: 'customer_support' as TabType, label: t.customerSupport || (lang === 'bn' ? 'কাস্টমার সাপোর্ট' : 'Customer Support'), icon: Headphones },
-        { id: 'settings' as TabType, label: t.settings, icon: Settings },
+        { id: 'attendance' as TabType, label: getModuleLabel('attendance', t.attendance || 'Attendance'), icon: Clock },
+        { id: 'warranty_check' as TabType, label: getModuleLabel('warranty_check', t.warrantyCheck || 'Warranty Check'), icon: ShieldCheck },
+        { id: 'reports' as TabType, label: getModuleLabel('reports', t.reports), icon: BarChart3 },
+        { id: 'users_management' as TabType, label: getModuleLabel('users_management', t.userManagement || (lang === 'bn' ? 'ইউজার ম্যানেজমেন্ট' : 'User Management')), icon: Users },
+        { id: 'billing_upgrade' as TabType, label: getModuleLabel('billing_upgrade', t.billingUpgrade || (lang === 'bn' ? 'বিলিং ও আপগ্রেড' : 'Billing & Upgrade')), icon: CreditCard },
+        { id: 'customer_support' as TabType, label: getModuleLabel('customer_support', t.customerSupport || (lang === 'bn' ? 'কাস্টমার সাপোর্ট' : 'Customer Support')), icon: Headphones },
+        { id: 'settings' as TabType, label: getModuleLabel('settings', t.settings), icon: Settings },
       ]
     },
-    ...(user?.email === 'mdanaetullah2021@gmail.com' || user?.isOwner || user?.role === 'superadmin'
+    ...(isOwner
       ? [
           {
             title: lang === 'bn' ? '👑 ওনার স্পেশাল' : '👑 OWNER MASTER',
@@ -88,6 +102,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
         ]
       : []),
   ];
+
+  const menuSections = rawMenuSections
+    .map(section => ({
+      ...section,
+      items: section.items.filter(item => isTabAllowed(item.id))
+    }))
+    .filter(section => section.items.length > 0);
 
   const userName = user?.name || (lang === 'bn' ? 'এডমিন' : 'Admin');
   const userInitials = userName
@@ -188,7 +209,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Navigation Sections */}
         <div className="flex-1 overflow-y-auto px-3 py-2 space-y-4">
-          {menuSections.map((section, idx) => (
+          {menuSections
+            .map((section) => ({
+              ...section,
+              items: section.items.filter((item) => StorageService.isFeatureEnabled(item.id)),
+            }))
+            .filter((section) => section.items.length > 0)
+            .map((section, idx) => (
             <div key={idx} className="space-y-1">
               {(!isCollapsed || isMobileOpen) && (
                 <p className="px-2 text-[10px] font-bold text-slate-400/80 tracking-wider uppercase">

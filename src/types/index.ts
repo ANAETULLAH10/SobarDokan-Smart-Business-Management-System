@@ -375,6 +375,20 @@ export interface OwnerConfig {
   monthlyPrice: number;
   yearlyPrice: number;
   lifetimePrice: number;
+  masterPin?: string;
+}
+
+export interface AppFeatureModule {
+  id: string;
+  tabId: TabType;
+  nameBn: string;
+  nameEn: string;
+  category: 'core' | 'inventory' | 'finance' | 'admin' | 'ai';
+  icon: string;
+  enabled: boolean;
+  description: string;
+  badge?: string;
+  isCustom?: boolean;
 }
 
 export interface WarrantyClaim {

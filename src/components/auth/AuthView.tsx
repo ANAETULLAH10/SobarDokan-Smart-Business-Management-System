@@ -476,36 +476,21 @@ export const AuthView: React.FC<AuthViewProps> = ({
                 <span>{isLoading ? (isBn ? 'লগইন হচ্ছে...' : 'Logging in...') : (isBn ? 'লগইন করুন' : 'Log In')}</span>
               </button>
 
-              {/* Switch to Signup & Owner Quick Fill */}
-              <div className="text-center pt-2 space-y-2">
-                <div>
-                  <span className="text-xs text-slate-500">
-                    {isBn ? 'অ্যাকাউন্ট নেই? ' : "Don't have an account? "}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMode('signup');
-                      setErrorMessage(null);
-                    }}
-                    className="text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline cursor-pointer"
-                  >
-                    {isBn ? '৩ দিনের ফ্রি ট্রায়াল শুরু করুন' : 'Start 3-Day Free Trial'}
-                  </button>
-                </div>
-
-                <div className="pt-2 border-t border-slate-100 flex items-center justify-center">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setLoginEmail('mdanaetullah2021@gmail.com');
-                      setLoginPassword('123456');
-                    }}
-                    className="text-[11px] text-amber-600 hover:text-amber-700 font-semibold cursor-pointer py-1 px-2.5 rounded-lg bg-amber-50 hover:bg-amber-100 transition"
-                  >
-                    👑 {isBn ? 'অ্যাপ মালিক কুইক লগইন (mdanaetullah2021@gmail.com)' : 'Owner Quick Login (mdanaetullah2021@gmail.com)'}
-                  </button>
-                </div>
+              {/* Switch to Signup */}
+              <div className="text-center pt-2">
+                <span className="text-xs text-slate-500">
+                  {isBn ? 'অ্যাকাউন্ট নেই? ' : "Don't have an account? "}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode('signup');
+                    setErrorMessage(null);
+                  }}
+                  className="text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline cursor-pointer"
+                >
+                  {isBn ? '৩ দিনের ফ্রি ট্রায়াল শুরু করুন' : 'Start 3-Day Free Trial'}
+                </button>
               </div>
             </form>
           ) : (

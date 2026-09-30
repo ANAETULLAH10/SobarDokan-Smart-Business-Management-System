@@ -248,7 +248,7 @@ export const TrialSuspendedView: React.FC<TrialSuspendedViewProps> = ({
                 {isBn ? 'সরাসরি হোয়াটসঅ্যাপ' : 'Direct WhatsApp'}
               </span>
               <p className="text-sm font-bold text-white group-hover:underline">
-                {isBn ? 'মালিকের সাথে চ্যাট করুন' : 'Chat with App Owner'}
+                {isBn ? 'সবার দোকান কাস্টমার কেয়ার' : 'SobarDokan Customer Care'}
               </p>
               <p className="text-[11px] text-slate-400">+{ownerConfig.ownerWhatsApp || '8801700000000'}</p>
             </div>
@@ -264,13 +264,13 @@ export const TrialSuspendedView: React.FC<TrialSuspendedViewProps> = ({
             </div>
             <div>
               <span className="text-xs font-bold text-indigo-400 uppercase tracking-wider block">
-                {isBn ? 'সরাসরি কল সাপোর্ট' : 'Direct Call Support'}
+                {isBn ? 'হেল্পলাইন কল সাপোর্ট' : 'Direct Helpline'}
               </span>
               <p className="text-sm font-bold text-white group-hover:underline">
                 {ownerConfig.ownerPhone || '01700-000000'}
               </p>
               <p className="text-[11px] text-slate-400">
-                {ownerConfig.ownerName || 'MD ANAETULLAH (App Owner)'}
+                {isBn ? 'সবার দোকান অফিশিয়াল সাপোর্ট' : 'SobarDokan Official Support'}
               </p>
             </div>
           </a>
@@ -289,7 +289,7 @@ export const TrialSuspendedView: React.FC<TrialSuspendedViewProps> = ({
               className="text-xs text-slate-500 hover:text-indigo-400 flex items-center gap-1 transition"
             >
               <Key className="w-3 h-3" />
-              <span>{isBn ? 'ওনার আনলক পিন' : 'Owner PIN Unlock'}</span>
+              <span>{isBn ? 'মাস্টার পিন আনলক' : 'Master PIN Unlock'}</span>
             </button>
           </h3>
 
