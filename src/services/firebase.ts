@@ -13,8 +13,12 @@ export async function loginWithGoogle() {
   try {
     const result = await signInWithPopup(auth, googleProvider);
     return result.user;
-  } catch (error) {
-    console.warn('Firebase Google Auth error (fallback to local user):', error);
+  } catch (error: any) {
+    if (error?.code === 'auth/popup-closed-by-user' || error?.code === 'auth/cancelled-popup-request') {
+      console.info('Google Sign In: popup closed or cancelled by user.');
+    } else {
+      console.warn('Firebase Google Auth error:', error);
+    }
     throw error;
   }
 }

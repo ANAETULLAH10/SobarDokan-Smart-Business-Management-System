@@ -263,12 +263,17 @@ export const App: React.FC = () => {
   const handleLogin = async () => {
     try {
       const result = await signInWithPopup(auth, googleProvider);
+      const isOwner = StorageService.isOwnerEmail(result.user.email);
+      const existing = StorageService.findUserByEmail(result.user.email || '');
       const u: User = {
         uid: result.user.uid,
-        name: result.user.displayName || 'Admin',
+        name: result.user.displayName || existing?.name || (isOwner ? 'MD ANAETULLAH' : 'Admin'),
         email: result.user.email || '',
         photoURL: result.user.photoURL || undefined,
-        role: 'admin'
+        role: isOwner ? 'superadmin' : 'admin',
+        isOwner: Boolean(isOwner),
+        subscriptionStatus: isOwner ? 'active' : (existing?.subscriptionStatus || 'trial'),
+        subscriptionPlan: isOwner ? 'Lifetime Owner Unlimited' : (existing?.subscriptionPlan || '3-Day Free Trial'),
       };
       setUser(u);
       StorageService.saveUser(u);
@@ -276,8 +281,16 @@ export const App: React.FC = () => {
       await StorageService.syncToFirestore();
       setIsSyncing(false);
     } catch (err: any) {
-      console.error('Login error:', err);
-      alert('Google Sign-in: ' + (err?.message || 'Could not complete sign in'));
+      if (err?.code === 'auth/popup-closed-by-user' || err?.code === 'auth/cancelled-popup-request') {
+        console.info('Google login popup cancelled by user.');
+      } else {
+        console.warn('Login error:', err);
+        addToast({
+          type: 'warning',
+          title: lang === 'bn' ? 'লগইন বার্তা' : 'Sign-in Notice',
+          message: err?.message || 'Could not complete sign in',
+        });
+      }
       setIsSyncing(false);
     }
   };

@@ -98,11 +98,22 @@ export const AuthView: React.FC<AuthViewProps> = ({
       StorageService.saveRegisteredUser(userObj);
       onLoginSuccess(userObj);
     } catch (err: any) {
-      console.error('Google Sign In Error:', err);
-      // If popup closed or cancelled
-      if (err?.code === 'auth/popup-closed-by-user') {
-        setErrorMessage(isBn ? 'গুগল সাইন-ইন উইন্ডো বন্ধ করা হয়েছে।' : 'Sign-in popup was closed.');
+      if (err?.code === 'auth/popup-closed-by-user' || err?.code === 'auth/cancelled-popup-request') {
+        console.info('Google Sign In: popup closed or cancelled by user.');
+        setErrorMessage(
+          isBn
+            ? 'গুগল সাইন-ইন উইন্ডো বন্ধ করা হয়েছে। আপনি সরাসরি ইমেইল ও পাসওয়ার্ড দিয়েও লগইন বা রেজিস্টার করতে পারেন।'
+            : 'Google Sign-in window was closed. You can also sign in directly using email & password.'
+        );
+      } else if (err?.code === 'auth/popup-blocked') {
+        console.warn('Google Sign In: popup was blocked by browser.');
+        setErrorMessage(
+          isBn
+            ? 'ব্রাউজার পপ-আপ ব্লক করেছে। অনুগ্রহ করে ব্রাউজারে পপ-আপ এলাউ করুন অথবা নিচে ইমেইল ও পাসওয়ার্ড দিয়ে লগইন করুন।'
+            : 'Popup blocked by browser. Please allow popups or sign in below with email & password.'
+        );
       } else {
+        console.warn('Google Sign In Error:', err);
         setErrorMessage(
           isBn
             ? 'গুগল লগইন সম্পন্ন করা যায়নি: ' + (err?.message || 'নেটওয়ার্ক ত্রুটি')
