@@ -60,7 +60,34 @@ export const App: React.FC = () => {
   const [expenses, setExpenses] = useState<Expense[]>(StorageService.getExpenses());
 
   // User & Sync State
-  const [user, setUser] = useState<User | null>(StorageService.getUser());
+  const [user, setUser] = useState<User | null>(() => {
+    const u = StorageService.getUser();
+    if (u) {
+      const isOwner = StorageService.isOwnerEmail(u.email);
+      if (!isOwner) {
+        let changed = false;
+        const fixed: User = { ...u };
+        if (fixed.isOwner) {
+          fixed.isOwner = false;
+          changed = true;
+        }
+        if (fixed.role === 'superadmin' || fixed.role === 'Owner') {
+          fixed.role = 'admin';
+          changed = true;
+        }
+        if (fixed.name && fixed.name.includes('MD ANAETULLAH')) {
+          fixed.name = fixed.businessName ? `${fixed.businessName} (মালিক)` : 'দোকান মালিক';
+          changed = true;
+        }
+        if (changed) {
+          StorageService.saveUser(fixed);
+          StorageService.saveRegisteredUser(fixed);
+        }
+        return fixed;
+      }
+    }
+    return u;
+  });
   const [isSyncing, setIsSyncing] = useState(false);
   const [settingsInitialTab, setSettingsInitialTab] = useState<SettingsTabId>('profile');
 
@@ -112,25 +139,28 @@ export const App: React.FC = () => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         const existing = StorageService.findUserByEmail(firebaseUser.email || '');
-        const now = new Date();
-        const threeDaysLater = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
-        const isOwner = firebaseUser.email === 'mdanaetullah2021@gmail.com' || existing?.isOwner;
+        if (!existing) {
+          // Brand new user must complete the 2-step onboarding first
+          // (Step 1: Profile & Business info, Step 2: Choose Business Category).
+          // AuthView's Google sign-in handler will launch SignupOnboardingView.
+          return;
+        }
+
+        const isOwner = StorageService.isOwnerEmail(firebaseUser.email);
+        const resolvedName = firebaseUser.displayName || 
+          (existing.name && !existing.name.includes('MD ANAETULLAH') ? existing.name : (isOwner ? 'MD ANAETULLAH' : (existing.businessName ? `${existing.businessName} (মালিক)` : 'দোকান মালিক')));
         const u: User = {
+          ...existing,
           uid: firebaseUser.uid,
-          name: firebaseUser.displayName || existing?.name || (isOwner ? 'MD ANAETULLAH' : 'দোকানদার'),
-          email: firebaseUser.email || '',
-          photoURL: firebaseUser.photoURL || undefined,
+          name: resolvedName,
+          email: firebaseUser.email || existing.email,
+          photoURL: firebaseUser.photoURL || (existing.photoURL && !existing.photoURL.includes('default') ? existing.photoURL : undefined),
           role: isOwner ? 'superadmin' : 'admin',
-          isOwner,
-          businessName: existing?.businessName || settings.businessName,
-          phone: existing?.phone || '',
-          createdAt: existing?.createdAt || now.toISOString(),
-          trialStartDate: existing?.trialStartDate || now.toISOString(),
-          trialEndsAt: isOwner
-            ? new Date(now.getTime() + 3650 * 24 * 60 * 60 * 1000).toISOString()
-            : existing?.trialEndsAt || threeDaysLater.toISOString(),
-          subscriptionStatus: isOwner ? 'active' : existing?.subscriptionStatus || 'trial',
-          subscriptionPlan: isOwner ? 'Lifetime Owner Unlimited' : existing?.subscriptionPlan || '3-Day Free Trial',
+          isOwner: Boolean(isOwner),
+          businessName: existing.businessName || settings.businessName,
+          phone: existing.phone || '',
+          subscriptionStatus: isOwner ? 'active' : (existing.subscriptionStatus || 'trial'),
+          subscriptionPlan: isOwner ? 'Lifetime Owner Unlimited' : (existing.subscriptionPlan || '3-Day Free Trial'),
         };
         setUser(u);
         StorageService.saveUser(u);
@@ -171,9 +201,9 @@ export const App: React.FC = () => {
   }, [activeTab]);
 
   // Stock alert threshold notification whenever logged-in user is on Dashboard
-  // CRITICAL: Absolutely never show on login/auth view or when user is not logged in!
+  // CRITICAL: Absolutely never show on login/auth view, when user is not logged in, or when store is empty!
   useEffect(() => {
-    if (!user || activeTab !== 'dashboard') {
+    if (!user || activeTab !== 'dashboard' || products.length === 0) {
       dismissToast('low-stock-dashboard-alert');
       return;
     }
@@ -267,7 +297,7 @@ export const App: React.FC = () => {
       const existing = StorageService.findUserByEmail(result.user.email || '');
       const u: User = {
         uid: result.user.uid,
-        name: result.user.displayName || existing?.name || (isOwner ? 'MD ANAETULLAH' : 'Admin'),
+        name: result.user.displayName || (existing?.name && !existing.name.includes('MD ANAETULLAH') ? existing.name : (isOwner ? 'MD ANAETULLAH' : (existing?.businessName ? `${existing.businessName} (মালিক)` : 'দোকান মালিক'))),
         email: result.user.email || '',
         photoURL: result.user.photoURL || undefined,
         role: isOwner ? 'superadmin' : 'admin',
@@ -305,6 +335,7 @@ export const App: React.FC = () => {
     StorageService.saveUser(null);
     dismissToast('low-stock-dashboard-alert');
     setToasts([]);
+    refreshAllState();
   };
 
   const handleManualSync = async () => {
@@ -440,7 +471,11 @@ export const App: React.FC = () => {
         lang={lang}
         settings={settings}
         onLoginSuccess={(loggedInUser) => {
+          StorageService.saveUser(loggedInUser);
           setUser(loggedInUser);
+          dismissToast('low-stock-dashboard-alert');
+          setToasts([]);
+          refreshAllState();
           addToast({
             type: 'success',
             title: lang === 'bn' ? 'স্বাগতম!' : 'Welcome!',
@@ -520,7 +555,7 @@ export const App: React.FC = () => {
           lowStockProducts={products.filter(p => p.currentStock <= p.minStockAlert)}
           onNavigateSettings={handleNavigateSettings}
           onOpenVoiceAssistant={() => setIsVoiceModalOpen(true)}
-          onNavigateOwnerMaster={() => setActiveTab('owner_master')}
+          onNavigateOwnerMaster={StorageService.isOwnerEmail(user?.email) ? () => setActiveTab('owner_master') : undefined}
         />
 
         {/* Trial Active Banner for New Clients */}
@@ -763,7 +798,7 @@ export const App: React.FC = () => {
             />
           )}
 
-          {activeTab === 'owner_master' && (
+          {activeTab === 'owner_master' && StorageService.isOwnerEmail(user?.email) && (
             <OwnerMasterPanel
               currentUser={user}
               lang={lang}

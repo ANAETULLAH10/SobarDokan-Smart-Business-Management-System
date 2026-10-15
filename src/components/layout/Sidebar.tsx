@@ -33,7 +33,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onOpenQuickSale
 }) => {
   const t = translations[lang];
-  const isOwner = user?.email === 'mdanaetullah2021@gmail.com' || user?.isOwner || user?.role === 'superadmin';
+  const isOwner = StorageService.isOwnerEmail(user?.email);
   const featureModules = StorageService.getFeatureModules();
 
   const getModuleLabel = (tabId: TabType, defaultLabel: string) => {
@@ -110,14 +110,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }))
     .filter(section => section.items.length > 0);
 
-  const userName = user?.name || (lang === 'bn' ? 'এডমিন' : 'Admin');
+  const userName = (user?.name && !user.name.includes('MD ANAETULLAH'))
+    ? user.name
+    : (isOwner ? 'MD ANAETULLAH' : (user?.businessName ? `${user.businessName} (মালিক)` : (lang === 'bn' ? 'দোকান মালিক' : 'Shop Owner')));
   const userInitials = userName
     .split(' ')
     .filter(Boolean)
     .map(n => n[0])
     .slice(0, 2)
     .join('')
-    .toUpperCase() || 'AD';
+    .toUpperCase() || 'SH';
 
   const handleNavClick = (tab: TabType) => {
     setActiveTab(tab);

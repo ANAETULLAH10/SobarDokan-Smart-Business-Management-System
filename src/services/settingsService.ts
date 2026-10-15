@@ -48,15 +48,15 @@ const STORAGE_KEYS = {
 
 // Default initial state
 export const defaultAdminProfile: AdminProfile = {
-  id: 'adm-001',
-  name: 'MD ANAETULLAH',
+  id: 'usr-admin-1',
+  name: 'দোকান মালিক',
   username: 'admin',
-  email: 'mdanaetullah2021@gmail.com',
-  phone: '01700-000000',
-  address: 'মিরপুর ১০, ঢাকা ১২১৬, বাংলাদেশ',
-  role: 'Owner',
-  employeeId: 'EMP-001',
-  dateJoined: '2024-01-01',
+  email: '',
+  phone: '',
+  address: '',
+  role: 'Admin',
+  employeeId: 'SHP-001',
+  dateJoined: '2025-01-01',
   accountStatus: 'active',
   lastLogin: new Date().toISOString(),
   language: 'bn',
@@ -91,78 +91,30 @@ export const defaultTwoFactor: TwoFactorAuthSettings = {
 export const defaultSessions: UserSessionRecord[] = [
   {
     id: 'sess-current',
-    userId: 'adm-001',
-    userName: 'MD ANAETULLAH (Owner)',
-    device: 'Desktop Workstation',
-    browser: 'Chrome 128 (Windows 11)',
-    os: 'Windows 11 Pro 64-bit',
-    ip: '103.145.120.45 (Dhaka, BD)',
-    location: 'Dhaka, Bangladesh',
-    loginDate: new Date(Date.now() - 3600000 * 4).toISOString(),
-    lastActive: 'এখনই সক্রিয় (Just now)',
+    userId: 'usr-current',
+    userName: 'বর্তমান সক্রিয় সেশন',
+    device: 'Desktop / Browser Workstation',
+    browser: 'Chrome / Web Browser',
+    os: 'Windows / Mac / Android',
+    ip: '103.145.xxx.xx',
+    location: 'বাংলাদেশ (Bangladesh)',
+    loginDate: new Date().toISOString(),
+    lastActive: 'এখনই সক্রিয় (Active now)',
     isCurrent: true
-  },
-  {
-    id: 'sess-pos-terminal',
-    userId: 'adm-001',
-    userName: 'POS Counter 01',
-    device: 'Thermal POS Tablet',
-    browser: 'Android Webview / Chrome Mobile',
-    os: 'Android 14',
-    ip: '192.168.1.105 (LAN Store)',
-    location: 'Mirpur Shop, Dhaka',
-    loginDate: new Date(Date.now() - 3600000 * 24).toISOString(),
-    lastActive: '২ ঘণ্টা আগে (2 hours ago)',
-    isCurrent: false
-  },
-  {
-    id: 'sess-mobile',
-    userId: 'adm-001',
-    userName: 'Owner Mobile App',
-    device: 'Samsung Galaxy S24 Ultra',
-    browser: 'Mobile Safari / Chrome',
-    os: 'Android 14',
-    ip: '103.145.120.89 (Dhaka, BD)',
-    location: 'Dhaka, Bangladesh',
-    loginDate: new Date(Date.now() - 3600000 * 48).toISOString(),
-    lastActive: 'গতকাল (Yesterday)',
-    isCurrent: false
   }
 ];
 
 export const defaultBranches: BranchRecord[] = [
   {
     id: 'br-main',
-    name: 'প্রধান শাখা – মিরপুর ১০',
-    code: 'BR-MIRPUR-01',
-    address: 'প্লট ১২, রোড ৪, সেকশন ১০, মিরপুর, ঢাকা ১২১৬',
-    phone: '01700-000000',
-    manager: 'MD ANAETULLAH (Owner)',
+    name: 'প্রধান দোকান (Main Store)',
+    code: 'BR-MAIN-01',
+    address: 'দোকানের ঠিকানা',
+    phone: '',
+    manager: 'দোকান ম্যানেজার',
     status: 'active',
     isDefault: true,
-    createdAt: '2024-01-01'
-  },
-  {
-    id: 'br-uttara',
-    name: 'উত্তরা শাখা (আউটলেট ২)',
-    code: 'BR-UTTARA-02',
-    address: 'হাউস ৪৫, রোড ৭, সেক্টর ৩, উত্তরা, ঢাকা ১২৩০',
-    phone: '01800-112233',
-    manager: 'মোঃ তানভীর আহমেদ (Manager)',
-    status: 'active',
-    isDefault: false,
-    createdAt: '2024-06-15'
-  },
-  {
-    id: 'br-dhanmondi',
-    name: 'ধানমন্ডি শো-রুম (আউটলেট ৩)',
-    code: 'BR-DHAN-03',
-    address: 'সাত মসজিদ রোড, ধানমন্ডি, ঢাকা ১২০৫',
-    phone: '01900-445566',
-    manager: 'রাকিবুল হাসান (Manager)',
-    status: 'active',
-    isDefault: false,
-    createdAt: '2024-11-01'
+    createdAt: new Date().toISOString().split('T')[0]
   }
 ];
 
@@ -372,61 +324,7 @@ export const defaultNotificationPrefs: NotificationPreferences = {
   showBadge: true
 };
 
-export const defaultAuditLogs: AuditRecord[] = [
-  {
-    id: 'aud-001',
-    user: 'MD ANAETULLAH',
-    userRole: 'Owner',
-    action: 'Settings Updated',
-    module: 'Business Profile',
-    timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-    description: 'দোকানের ঠিকানা ও ইনভয়েস প্রিভিউ আপডেট করা হয়েছে',
-    status: 'success'
-  },
-  {
-    id: 'aud-002',
-    user: 'MD ANAETULLAH',
-    userRole: 'Owner',
-    action: 'User Login',
-    module: 'Security & Auth',
-    timestamp: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
-    description: 'সিস্টেমে অ্যাডমিন প্রোফাইলে সফল লগইন সম্পন্ন হয়েছে',
-    status: 'success',
-    ip: '103.145.120.45'
-  },
-  {
-    id: 'aud-003',
-    user: 'মোঃ তানভীর আহমেদ',
-    userRole: 'Manager',
-    action: 'Product Added',
-    module: 'Inventory',
-    recordId: 'PRD-1004',
-    timestamp: new Date(Date.now() - 1000 * 60 * 240).toISOString(),
-    description: 'নতুন পণ্য "Samsung Galaxy A55 5G" ক্যাটালগে যুক্ত করা হয়েছে',
-    status: 'success'
-  },
-  {
-    id: 'aud-004',
-    user: 'রাকিবুল হাসান',
-    userRole: 'Cashier',
-    action: 'Sale Created',
-    module: 'POS Sales',
-    recordId: 'INV-1048',
-    timestamp: new Date(Date.now() - 1000 * 60 * 360).toISOString(),
-    description: 'ক্যাশ মেমো #INV-1048 (টাকা ৩৫,২০০) সম্পন্ন হয়েছে',
-    status: 'success'
-  },
-  {
-    id: 'aud-005',
-    user: 'MD ANAETULLAH',
-    userRole: 'Owner',
-    action: 'Backup Created',
-    module: 'Backup & Restore',
-    timestamp: new Date(Date.now() - 1000 * 60 * 720).toISOString(),
-    description: 'সম্পূর্ণ ডাটাবেস ব্যাকআপ (.json) ডাউনলোড করা হয়েছে',
-    status: 'success'
-  }
-];
+export const defaultAuditLogs: AuditRecord[] = [];
 
 export const defaultBackupHistory: BackupHistoryItem[] = [
   {
@@ -611,9 +509,15 @@ export const defaultRolePermissions: RolePermissionMatrix = {
 };
 
 export class SettingsService {
-  private static getItem<T>(key: string, defaultValue: T): T {
+  private static getScopedKey(key: string, userScope?: string | null): string {
+    const scope = userScope || StorageService.getActiveUserScope();
+    return scope ? `${key}_scope_${scope}` : key;
+  }
+
+  private static getItem<T>(key: string, defaultValue: T, userScope?: string | null): T {
     try {
-      const data = localStorage.getItem(key);
+      const scopedKey = this.getScopedKey(key, userScope);
+      const data = localStorage.getItem(scopedKey);
       if (!data) return defaultValue;
       return JSON.parse(data);
     } catch (e) {
@@ -622,38 +526,168 @@ export class SettingsService {
     }
   }
 
-  private static setItem<T>(key: string, value: T): void {
+  private static setItem<T>(key: string, value: T, userScope?: string | null): void {
     try {
-      localStorage.setItem(key, JSON.stringify(value));
+      const scopedKey = this.getScopedKey(key, userScope);
+      localStorage.setItem(scopedKey, JSON.stringify(value));
     } catch (e) {
       console.error(`Error saving key: ${key}`, e);
     }
   }
 
-  // Admin Profile
-  public static getAdminProfile(): AdminProfile {
-    return this.getItem<AdminProfile>(STORAGE_KEYS.ADMIN_PROFILE, defaultAdminProfile);
-  }
+  // Profile management: tailored to each logged-in shop owner / customer
+  public static getAdminProfile(currentUser?: any): AdminProfile {
+    const user = currentUser !== undefined ? currentUser : StorageService.getUser();
+    const isOwner = StorageService.isOwnerEmail(user?.email);
 
-  public static saveAdminProfile(profile: AdminProfile): void {
-    this.setItem(STORAGE_KEYS.ADMIN_PROFILE, profile);
-    // Also sync user in StorageService if applicable
-    const currentUser = StorageService.getUser();
-    if (currentUser) {
-      StorageService.saveUser({
-        ...currentUser,
-        name: profile.name,
-        email: profile.email,
-        photoURL: profile.photoURL || currentUser.photoURL,
-        role: profile.role
-      });
+    const baseProfile: AdminProfile = isOwner
+      ? {
+          id: user?.uid || 'adm-owner-1',
+          name: user?.name || 'MD ANAETULLAH',
+          username: 'app_owner',
+          email: user?.email || 'mdanaetullah2021@gmail.com',
+          phone: user?.phone || '',
+          address: 'ঢাকা, বাংলাদেশ',
+          role: 'Owner',
+          employeeId: 'OWNER-001',
+          dateJoined: user?.createdAt ? user.createdAt.split('T')[0] : '2024-01-01',
+          accountStatus: 'active',
+          lastLogin: new Date().toISOString(),
+          language: 'bn',
+          timezone: 'Asia/Dhaka',
+          photoURL: user?.photoURL || ''
+        }
+      : {
+          id: user?.uid || 'usr-shop-1',
+          name: (user?.name && !user.name.includes('MD ANAETULLAH'))
+            ? user.name
+            : (user?.businessName ? `${user.businessName} (মালিক)` : 'দোকান মালিক'),
+          username: user?.email ? user.email.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '') : 'shop_owner',
+          email: user?.email || '',
+          phone: user?.phone || '',
+          address: '',
+          role: 'Admin',
+          employeeId: user?.uid ? `SHP-${user.uid.slice(-4).toUpperCase()}` : 'SHP-001',
+          dateJoined: user?.createdAt ? user.createdAt.split('T')[0] : new Date().toISOString().split('T')[0],
+          accountStatus: user?.subscriptionStatus === 'suspended' ? 'suspended' : 'active',
+          lastLogin: new Date().toISOString(),
+          language: 'bn',
+          timezone: 'Asia/Dhaka',
+          photoURL: user?.photoURL || ''
+        };
+
+    const saved = this.getItem<AdminProfile | null>(STORAGE_KEYS.ADMIN_PROFILE, null, user?.uid || user?.email);
+    if (!saved) {
+      return baseProfile;
     }
-    this.logAudit(profile.name, 'Admin Profile Updated', 'Admin Profile', 'প্রোফাইল তথ্য ও ছবি সফলভাবে আপডেট করা হয়েছে', 'success');
+
+    // Safety sanitize: if current user is NOT app owner, strip out ANY leaked owner info
+    if (!isOwner) {
+      const cleanName = (saved.name && !saved.name.includes('MD ANAETULLAH'))
+        ? saved.name
+        : baseProfile.name;
+      const cleanEmail = (user?.email && !user.email.includes('mdanaetullah'))
+        ? user.email
+        : (saved.email && !saved.email.includes('mdanaetullah') ? saved.email : '');
+      const cleanPhone = (saved.phone && saved.phone !== '01700-000000') ? saved.phone : (user?.phone || '');
+      const cleanAddress = (saved.address && !saved.address.includes('মিরপুর ১০') && !saved.address.includes('ঢাকা, বাংলাদেশ'))
+        ? saved.address
+        : '';
+      const cleanUsername = (saved.username && saved.username !== 'app_owner' && saved.username !== 'admin')
+        ? saved.username
+        : baseProfile.username;
+      const cleanEmployeeId = (saved.employeeId && saved.employeeId !== 'OWNER-001' && saved.employeeId !== 'EMP-001')
+        ? saved.employeeId
+        : baseProfile.employeeId;
+
+      return {
+        ...baseProfile,
+        ...saved,
+        id: user?.uid || baseProfile.id,
+        name: cleanName,
+        username: cleanUsername,
+        employeeId: cleanEmployeeId,
+        email: cleanEmail,
+        role: 'Admin',
+        phone: cleanPhone,
+        address: cleanAddress,
+        photoURL: user?.photoURL || (saved.photoURL && !saved.photoURL.includes('default') ? saved.photoURL : ''),
+      };
+    }
+
+    return {
+      ...baseProfile,
+      ...saved
+    };
   }
 
-  public static resetAdminProfile(): AdminProfile {
-    this.setItem(STORAGE_KEYS.ADMIN_PROFILE, defaultAdminProfile);
-    return defaultAdminProfile;
+  public static saveAdminProfile(profile: AdminProfile, currentUser?: any): void {
+    const user = currentUser !== undefined ? currentUser : StorageService.getUser();
+    const isOwner = StorageService.isOwnerEmail(user?.email);
+
+    const sanitized: AdminProfile = {
+      ...profile,
+      email: user?.email || profile.email,
+      role: isOwner ? 'Owner' : 'Admin'
+    };
+
+    this.setItem(STORAGE_KEYS.ADMIN_PROFILE, sanitized, user?.uid || user?.email);
+
+    if (user) {
+      const updatedUser = {
+        ...user,
+        name: sanitized.name,
+        phone: sanitized.phone || user.phone,
+        photoURL: sanitized.photoURL || user.photoURL,
+        role: isOwner ? 'superadmin' : 'admin',
+        isOwner: Boolean(isOwner)
+      };
+      StorageService.saveUser(updatedUser);
+      StorageService.saveRegisteredUser(updatedUser);
+    }
+    this.logAudit(sanitized.name, 'Profile Updated', 'Profile', 'প্রোফাইল তথ্য ও ছবি সফলভাবে আপডেট করা হয়েছে', 'success');
+  }
+
+  public static resetAdminProfile(currentUser?: any): AdminProfile {
+    const user = currentUser !== undefined ? currentUser : StorageService.getUser();
+    const isOwner = StorageService.isOwnerEmail(user?.email);
+    const freshProfile: AdminProfile = isOwner
+      ? {
+          id: user?.uid || 'adm-owner-1',
+          name: user?.name || 'MD ANAETULLAH',
+          username: 'app_owner',
+          email: user?.email || 'mdanaetullah2021@gmail.com',
+          phone: user?.phone || '',
+          address: 'ঢাকা, বাংলাদেশ',
+          role: 'Owner',
+          employeeId: 'OWNER-001',
+          dateJoined: user?.createdAt ? user.createdAt.split('T')[0] : '2024-01-01',
+          accountStatus: 'active',
+          lastLogin: new Date().toISOString(),
+          language: 'bn',
+          timezone: 'Asia/Dhaka',
+          photoURL: user?.photoURL || ''
+        }
+      : {
+          id: user?.uid || 'usr-shop-1',
+          name: (user?.name && !user.name.includes('MD ANAETULLAH'))
+            ? user.name
+            : (user?.businessName ? `${user.businessName} (মালিক)` : 'দোকান মালিক'),
+          username: user?.email ? user.email.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '') : 'shop_owner',
+          email: user?.email || '',
+          phone: user?.phone || '',
+          address: '',
+          role: 'Admin',
+          employeeId: user?.uid ? `SHP-${user.uid.slice(-4).toUpperCase()}` : 'SHP-001',
+          dateJoined: user?.createdAt ? user.createdAt.split('T')[0] : new Date().toISOString().split('T')[0],
+          accountStatus: user?.subscriptionStatus === 'suspended' ? 'suspended' : 'active',
+          lastLogin: new Date().toISOString(),
+          language: 'bn',
+          timezone: 'Asia/Dhaka',
+          photoURL: user?.photoURL || ''
+        };
+    this.setItem(STORAGE_KEYS.ADMIN_PROFILE, freshProfile, user?.uid || user?.email);
+    return freshProfile;
   }
 
   // Password Security
@@ -1103,41 +1137,4 @@ export class SettingsService {
   }
 }
 
-export const defaultManagedUsers: ManagedUser[] = [
-  {
-    id: 'usr-1',
-    name: 'তানভীর আহমেদ (Tanvir)',
-    username: 'tanvir',
-    email: 'tanvir@amardokan.com',
-    phone: '01811-223344',
-    role: 'Manager',
-    branch: 'প্রধান শাখা - মিরপুর',
-    status: 'active',
-    lastLogin: '2025-05-12T10:15:00Z',
-    createdAt: '2024-02-01'
-  },
-  {
-    id: 'usr-2',
-    name: 'ফারহানা ইসলাম (Farhana)',
-    username: 'farhana',
-    email: 'farhana@amardokan.com',
-    phone: '01922-334455',
-    role: 'Cashier',
-    branch: 'প্রধান শাখা - মিরপুর',
-    status: 'active',
-    lastLogin: '2025-05-12T09:30:00Z',
-    createdAt: '2024-03-15'
-  },
-  {
-    id: 'usr-3',
-    name: 'সাকিব হাসান (Sakib)',
-    username: 'sakib',
-    email: 'sakib@amardokan.com',
-    phone: '01633-445566',
-    role: 'Accountant',
-    branch: 'উত্তরা শাখা',
-    status: 'active',
-    lastLogin: '2025-05-11T16:45:00Z',
-    createdAt: '2024-04-10'
-  }
-];
+export const defaultManagedUsers: ManagedUser[] = [];

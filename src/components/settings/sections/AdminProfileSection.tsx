@@ -1,25 +1,37 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   User, Camera, Trash2, RefreshCw, Save, X, Shield, Mail, Phone,
   MapPin, Calendar, Clock, Globe, Award, CheckCircle2, AlertCircle
 } from 'lucide-react';
-import { AdminProfile, Language } from '../../../types';
+import { AdminProfile, Language, User as AuthUser } from '../../../types';
 import { SettingsService } from '../../../services/settingsService';
+import { StorageService } from '../../../services/storage';
 
 interface AdminProfileSectionProps {
   lang: Language;
+  user?: AuthUser | null;
   onProfileUpdated?: (profile: AdminProfile) => void;
 }
 
-export const AdminProfileSection: React.FC<AdminProfileSectionProps> = ({ lang, onProfileUpdated }) => {
+export const AdminProfileSection: React.FC<AdminProfileSectionProps> = ({ lang, user, onProfileUpdated }) => {
   const isBn = lang === 'bn';
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const isAppOwner = StorageService.isOwnerEmail(user?.email);
 
-  const [profile, setProfile] = useState<AdminProfile>(SettingsService.getAdminProfile());
+  const [profile, setProfile] = useState<AdminProfile>(() => SettingsService.getAdminProfile(user));
   const [formData, setFormData] = useState<AdminProfile>({ ...profile });
   const [isEditing, setIsEditing] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
+
+  // Auto-sync profile when user prop updates
+  useEffect(() => {
+    const updated = SettingsService.getAdminProfile(user);
+    setProfile(updated);
+    if (!isEditing) {
+      setFormData(updated);
+    }
+  }, [user]);
 
   // Handle image upload and resize via HTML5 Canvas
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -63,7 +75,7 @@ export const AdminProfileSection: React.FC<AdminProfileSectionProps> = ({ lang, 
             // Auto save photo if not in form edit mode
             const updated = { ...profile, photoURL: dataUrl };
             setProfile(updated);
-            SettingsService.saveAdminProfile(updated);
+            SettingsService.saveAdminProfile(updated, user);
             onProfileUpdated?.(updated);
           }
         }
@@ -78,7 +90,7 @@ export const AdminProfileSection: React.FC<AdminProfileSectionProps> = ({ lang, 
     if (!isEditing) {
       const updated = { ...profile, photoURL: '' };
       setProfile(updated);
-      SettingsService.saveAdminProfile(updated);
+      SettingsService.saveAdminProfile(updated, user);
       onProfileUpdated?.(updated);
     }
   };
@@ -89,17 +101,13 @@ export const AdminProfileSection: React.FC<AdminProfileSectionProps> = ({ lang, 
       setErrorMessage(isBn ? 'নাম আবশ্যক' : 'Name is required');
       return;
     }
-    if (!formData.email.trim()) {
-      setErrorMessage(isBn ? 'ইমেইল আবশ্যক' : 'Email is required');
-      return;
-    }
 
     setSaveStatus('saving');
     setErrorMessage('');
 
     setTimeout(() => {
       try {
-        SettingsService.saveAdminProfile(formData);
+        SettingsService.saveAdminProfile(formData, user);
         setProfile(formData);
         setIsEditing(false);
         setSaveStatus('saved');
@@ -120,7 +128,7 @@ export const AdminProfileSection: React.FC<AdminProfileSectionProps> = ({ lang, 
 
   const handleReset = () => {
     if (confirm(isBn ? 'আপনি কি প্রোফাইল তথ্য প্রারম্ভিক অবস্থায় রিসেট করতে চান?' : 'Reset profile to default values?')) {
-      const reset = SettingsService.resetAdminProfile();
+      const reset = SettingsService.resetAdminProfile(user);
       setProfile(reset);
       setFormData(reset);
       setIsEditing(false);
@@ -135,10 +143,10 @@ export const AdminProfileSection: React.FC<AdminProfileSectionProps> = ({ lang, 
         <div>
           <h3 className="text-base font-bold text-white flex items-center gap-2">
             <User className="w-5 h-5 text-indigo-400" />
-            <span>{isBn ? 'অ্যাডমিন প্রোফাইল (Admin Profile)' : 'Admin Profile Information'}</span>
+            <span>{isBn ? (isAppOwner ? 'অ্যাপ মালিক প্রোফাইল (App Owner Profile)' : 'আমার প্রোফাইল (My Profile)') : (isAppOwner ? 'App Owner Profile' : 'My Profile')}</span>
           </h3>
           <p className="text-xs text-slate-400 mt-0.5">
-            {isBn ? 'আপনার ব্যক্তিগত ও ব্যবসায়িক অ্যাকাউন্ট বিবরণী পরিচালনা করুন' : 'Manage your personal account details, contact info, and profile credentials'}
+            {isBn ? 'আপনার ব্যক্তিগত ও দোকানের অ্যাকাউন্ট বিবরণী পরিচালনা করুন' : 'Manage your personal account details, contact info, and profile credentials'}
           </p>
         </div>
 
@@ -231,9 +239,9 @@ export const AdminProfileSection: React.FC<AdminProfileSectionProps> = ({ lang, 
           <div className="flex-1 text-center sm:text-left space-y-2">
             <div className="flex flex-col sm:flex-row sm:items-center gap-2">
               <h4 className="text-lg font-bold text-white tracking-tight">{profile.name}</h4>
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-[11px] font-bold self-center sm:self-auto">
+              <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full ${isAppOwner ? 'bg-amber-500/20 text-amber-300 border-amber-500/40' : 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30'} text-[11px] font-bold self-center sm:self-auto`}>
                 <Shield className="w-3 h-3 text-indigo-400" />
-                {profile.role.toUpperCase()}
+                {isAppOwner ? '👑 APP OWNER' : (isBn ? 'দোকান মালিক' : 'SHOP OWNER')}
               </span>
               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[11px] font-semibold self-center sm:self-auto">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
@@ -317,10 +325,10 @@ export const AdminProfileSection: React.FC<AdminProfileSectionProps> = ({ lang, 
                 <input
                   type="email"
                   required
-                  disabled={!isEditing}
+                  disabled={true}
                   value={formData.email}
-                  onChange={e => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                  className="w-full bg-[#0b101d] border border-[#1e2a47] rounded-xl pl-9 pr-3 py-2 text-xs text-white focus:border-indigo-500 disabled:opacity-70 disabled:cursor-not-allowed font-medium"
+                  className="w-full bg-[#0b101d] border border-[#1e2a47] rounded-xl pl-9 pr-3 py-2 text-xs text-white/80 opacity-70 cursor-not-allowed font-medium"
+                  title={isBn ? 'লগইন ইমেইল ঠিকানা অপরিবর্তনীয়' : 'Login email cannot be changed'}
                 />
                 <Mail className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
               </div>
@@ -351,16 +359,20 @@ export const AdminProfileSection: React.FC<AdminProfileSectionProps> = ({ lang, 
               </label>
               <div className="relative">
                 <select
-                  disabled={!isEditing}
+                  disabled={!isEditing || !isAppOwner}
                   value={formData.role}
                   onChange={e => setFormData(prev => ({ ...prev, role: e.target.value as any }))}
                   className="w-full bg-[#0b101d] border border-[#1e2a47] rounded-xl pl-9 pr-3 py-2 text-xs text-white focus:border-indigo-500 disabled:opacity-70 disabled:cursor-not-allowed font-medium"
                 >
-                  <option value="Owner">Owner (মালিক / সর্বেসর্বা)</option>
-                  <option value="Admin">Admin (প্রশাসক)</option>
-                  <option value="Manager">Manager (ব্যবস্থাপক)</option>
-                  <option value="Cashier">Cashier (ক্যাশিয়ার)</option>
-                  <option value="Accountant">Accountant (হিসাবরক্ষক)</option>
+                  {isAppOwner ? (
+                    <option value="Owner">অ্যাপ মালিক (App Owner)</option>
+                  ) : (
+                    <>
+                      <option value="Admin">দোকান মালিক ও এডমিন (Shop Owner & Admin)</option>
+                      <option value="Manager">ম্যানেজার (Manager)</option>
+                      <option value="Cashier">ক্যাশিয়ার (Cashier)</option>
+                    </>
+                  )}
                 </select>
                 <Shield className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
               </div>

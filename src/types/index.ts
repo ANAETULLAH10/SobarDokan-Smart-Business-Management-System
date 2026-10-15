@@ -339,6 +339,7 @@ export interface BusinessSettings {
   postalCode?: string;
   country?: string;
   businessRegNo?: string;
+  businessType?: string;
 }
 
 export type TabType =
@@ -507,6 +508,7 @@ export interface User {
   trialEndsAt?: string;
   subscriptionStatus?: 'trial' | 'active' | 'suspended' | 'expired';
   subscriptionPlan?: string;
+  businessType?: string;
   isOwner?: boolean;
 }
 

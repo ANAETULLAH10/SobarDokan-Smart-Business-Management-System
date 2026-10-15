@@ -23,6 +23,31 @@ export const OwnerMasterPanel: React.FC<OwnerMasterPanelProps> = ({
   onRefreshAllState
 }) => {
   const isBn = lang === 'bn';
+  const isAuthorized = StorageService.isOwnerEmail(currentUser?.email);
+
+  if (!isAuthorized) {
+    return (
+      <div className="p-8 text-center bg-[#0d1424] rounded-2xl border border-rose-500/30 max-w-lg mx-auto mt-12 space-y-4">
+        <div className="w-16 h-16 rounded-full bg-rose-500/10 text-rose-400 mx-auto flex items-center justify-center">
+          <ShieldAlert className="w-8 h-8" />
+        </div>
+        <h3 className="text-lg font-bold text-white">
+          {isBn ? 'অননুমোদিত এক্সেস (Unauthorized)' : 'Unauthorized Access'}
+        </h3>
+        <p className="text-xs text-slate-400 leading-relaxed">
+          {isBn
+            ? 'এই কন্ট্রোল প্যানেলটি শুধুমাত্র প্ল্যাটফর্মের মূল মালিকের জন্য সংরক্ষিত। সাধারণ দোকান গ্রাহক বা কাস্টমারদের এখানে প্রবেশাধিকার নেই।'
+            : 'This master control panel is restricted to the platform owner. Customer accounts do not have access.'}
+        </p>
+        <button
+          onClick={() => onNavigateTab('dashboard')}
+          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold"
+        >
+          {isBn ? 'ড্যাশবোর্ডে ফিরে যান' : 'Back to Dashboard'}
+        </button>
+      </div>
+    );
+  }
 
   // State
   const [activeTab, setActiveTab] = useState<'shops' | 'features' | 'payment_settings' | 'cloud_backup'>('shops');

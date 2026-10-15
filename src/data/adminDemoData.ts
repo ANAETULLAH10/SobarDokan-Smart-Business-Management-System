@@ -256,9 +256,9 @@ export const defaultWarrantyClaims: WarrantyClaim[] = [
 export const defaultAppUsers: AppUser[] = [
   {
     id: 'usr-1',
-    name: 'MD ANAETULLAH',
-    phone: '01700-000000',
-    email: 'mdanaetullah2021@gmail.com',
+    name: 'দোকান অ্যাডমিন',
+    phone: '01711-000000',
+    email: 'admin@shop.com',
     role: 'admin',
     pin: '1234',
     status: 'active',

@@ -94,12 +94,15 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     }
   };
 
+  const isAppOwner = StorageService.isOwnerEmail(user?.email);
+  const currentProfile = SettingsService.getAdminProfile(user);
+
   const navCategories = [
     {
       groupBn: 'প্রোফাইল ও নিরাপত্তা',
       groupEn: 'Profile & Security',
       items: [
-        { id: 'profile' as SettingsTabId, labelBn: 'অ্যাডমিন প্রোফাইল', labelEn: 'Admin Profile', icon: User },
+        { id: 'profile' as SettingsTabId, labelBn: isAppOwner ? 'অ্যাপ মালিক প্রোফাইল' : 'আমার প্রোফাইল', labelEn: isAppOwner ? 'App Owner Profile' : 'My Profile', icon: User },
         { id: 'security' as SettingsTabId, labelBn: 'পাসওয়ার্ড ও নিরাপত্তা', labelEn: 'Password & 2FA', icon: Lock },
         { id: 'sessions' as SettingsTabId, labelBn: 'সক্রিয় সেশনসমূহ', labelEn: 'Active Sessions', icon: Shield }
       ]
@@ -152,12 +155,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         <div>
           <h2 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
             <Settings className="w-5 h-5 text-indigo-400" />
-            <span>{isBn ? 'অ্যাডমিন প্রোফাইল ও সিস্টেম সেটিংস' : 'Admin Profile & System Settings'}</span>
+            <span>{isBn ? (isAppOwner ? 'অ্যাপ মালিক ও সিস্টেম সেটিংস' : 'দোকান সেটিংস ও প্রোফাইল') : (isAppOwner ? 'App Owner & System Settings' : 'Shop Settings & Profile')}</span>
           </h2>
           <p className="text-xs text-slate-400 mt-0.5">
             {isBn
-              ? 'দোকানের পরিচিতি, অ্যাডমিন নিরাপত্তা, কর্মী অনুমতি, ইনভয়েস ডিজাইন এবং ক্লাউড ব্যাকআপ'
-              : 'Manage administrator credentials, branch networks, invoice formatting, and complete system policies'}
+              ? 'দোকানের পরিচিতি, অ্যাকাউন্ট নিরাপত্তা, কর্মী অনুমতি, ইনভয়েস ডিজাইন এবং ক্লাউড ব্যাকআপ'
+              : 'Manage store credentials, branch networks, invoice formatting, and complete system policies'}
           </p>
         </div>
 
@@ -208,24 +211,30 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         <aside className="lg:col-span-3 space-y-4">
           <div className="p-3 rounded-2xl bg-[#0d1424] border border-[#1e293b] space-y-4 shadow-xl">
             
-            {/* Quick Admin Summary Badge */}
+            {/* Quick Profile Summary Badge */}
             <div className="p-3 rounded-xl bg-[#111827] border border-[#1e2a47] flex items-center gap-3">
               <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-white font-bold text-sm shrink-0 overflow-hidden shadow">
-                {(SettingsService.getAdminProfile().photoURL || SettingsService.getAdminProfile().avatar) ? (
+                {(currentProfile.photoURL || user?.photoURL) ? (
                   <img
-                    src={SettingsService.getAdminProfile().photoURL || SettingsService.getAdminProfile().avatar}
-                    alt="Admin"
+                    src={currentProfile.photoURL || user?.photoURL}
+                    alt="User"
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  SettingsService.getAdminProfile().name.charAt(0).toUpperCase()
+                  (user?.name || currentProfile.name || 'দ').charAt(0).toUpperCase()
                 )}
               </div>
               <div className="min-w-0">
-                <p className="text-xs font-bold text-white truncate">{SettingsService.getAdminProfile().name}</p>
+                <p className="text-xs font-bold text-white truncate">
+                  {(user?.name && !user.name.includes('MD ANAETULLAH'))
+                    ? user.name
+                    : (currentProfile.name && !currentProfile.name.includes('MD ANAETULLAH')
+                      ? currentProfile.name
+                      : (isAppOwner ? 'MD ANAETULLAH' : (user?.businessName ? `${user.businessName} (মালিক)` : 'দোকান মালিক')))}
+                </p>
                 <div className="flex items-center gap-1.5 text-[11px] text-indigo-400">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  <span className="capitalize">{SettingsService.getAdminProfile().role}</span>
+                  <span className="capitalize">{isAppOwner ? (isBn ? 'অ্যাপ মালিক (Owner)' : 'App Owner') : (isBn ? 'দোকান মালিক' : 'Shop Owner')}</span>
                 </div>
               </div>
             </div>
@@ -274,6 +283,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           {activeTab === 'profile' && (
             <AdminProfileSection
               lang={lang}
+              user={user}
               onProfileUpdated={() => {
                 // Force header/avatar re-render
               }}

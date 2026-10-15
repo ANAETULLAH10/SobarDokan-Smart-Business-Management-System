@@ -269,7 +269,7 @@ export const PosView: React.FC<PosViewProps> = ({
       paymentMethod,
       status: 'completed',
       notes,
-      cashierName: 'MD ANAETULLAH',
+      cashierName: StorageService.getUser()?.name || 'ক্যাশিয়ার',
       createdAt: new Date().toISOString()
     };
 

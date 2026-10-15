@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { Language, User } from '../../types';
 import { SettingsService } from '../../services/settingsService';
+import { StorageService } from '../../services/storage';
 import { SettingsTabId } from '../settings/SettingsView';
 
 export interface UserAvatarDropdownProps {
@@ -36,14 +37,16 @@ export const UserAvatarDropdown: React.FC<UserAvatarDropdownProps> = ({
   const dropdownRef = useRef<HTMLDivElement>(null);
   const isBn = lang === 'bn';
 
-  // Retrieve current admin profile from SettingsService
-  const adminProfile = SettingsService.getAdminProfile();
+  // Retrieve user-scoped profile from SettingsService
+  const isOwner = StorageService.isOwnerEmail(user?.email);
+  const adminProfile = SettingsService.getAdminProfile(user);
 
-  const isOwner = user?.isOwner || user?.role === 'superadmin' || user?.email === 'mdanaetullah2021@gmail.com';
-  const userName = user?.name || adminProfile.name || (isBn ? 'এডমিন' : 'Admin');
-  const userEmail = user?.email || adminProfile.email || 'admin@sobardokan.app';
-  const userRole = isOwner ? 'owner' : (user?.role || adminProfile.role || 'Admin');
-  const userAvatar = user?.photoURL || adminProfile.photoURL || adminProfile.avatar;
+  const userName = (user?.name && !user.name.includes('MD ANAETULLAH'))
+    ? user.name
+    : (isOwner ? 'MD ANAETULLAH' : (user?.businessName ? `${user.businessName} (মালিক)` : (isBn ? 'দোকান মালিক' : 'Shop Owner')));
+  const userEmail = user?.email || (isOwner ? 'mdanaetullah2021@gmail.com' : '');
+  const userRole = isOwner ? 'owner' : (user?.role || 'Admin');
+  const userAvatar = user?.photoURL || '';
 
   const userInitials = userName
     .split(' ')
@@ -51,37 +54,22 @@ export const UserAvatarDropdown: React.FC<UserAvatarDropdownProps> = ({
     .map((n) => n[0])
     .slice(0, 2)
     .join('')
-    .toUpperCase() || 'AD';
+    .toUpperCase() || 'SH';
 
   // Role translation & badge color
   const getRoleBadge = (role: string) => {
-    switch (role.toLowerCase()) {
-      case 'owner':
-      case 'superadmin':
-        return {
-          text: isBn ? '👑 অ্যাপ মালিক (App Owner)' : '👑 App Owner',
-          badgeClass: 'bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-300 border-amber-500/30',
-          dotClass: 'bg-amber-400'
-        };
-      case 'admin':
-        return {
-          text: isBn ? 'এডমিন (Admin)' : 'Admin',
-          badgeClass: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30',
-          dotClass: 'bg-indigo-400'
-        };
-      case 'manager':
-        return {
-          text: isBn ? 'ম্যানেজার' : 'Manager',
-          badgeClass: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
-          dotClass: 'bg-blue-400'
-        };
-      default:
-        return {
-          text: role,
-          badgeClass: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
-          dotClass: 'bg-purple-400'
-        };
+    if (isOwner) {
+      return {
+        text: isBn ? '👑 অ্যাপ মালিক (App Owner)' : '👑 App Owner',
+        badgeClass: 'bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-300 border-amber-500/30',
+        dotClass: 'bg-amber-400'
+      };
     }
+    return {
+      text: isBn ? 'দোকান মালিক (Shop Owner)' : 'Shop Owner',
+      badgeClass: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30',
+      dotClass: 'bg-indigo-400'
+    };
   };
 
   const roleInfo = getRoleBadge(userRole);

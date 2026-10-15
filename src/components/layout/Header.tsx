@@ -7,6 +7,7 @@ import { Language, ThemeMode, User, Product } from '../../types';
 import { translations } from '../../i18n/translations';
 import { SettingsTabId } from '../settings/SettingsView';
 import { UserAvatarDropdown } from './UserAvatarDropdown';
+import { StorageService } from '../../services/storage';
 
 interface HeaderProps {
   title: string;
@@ -242,8 +243,8 @@ export const Header: React.FC<HeaderProps> = ({
           )}
         </div>
 
-        {/* App Owner Master Control Button */}
-        {(user?.email === 'mdanaetullah2021@gmail.com' || user?.isOwner || user?.role === 'superadmin') && onNavigateOwnerMaster && (
+        {/* App Owner Master Control Button - ONLY visible to actual App Owner */}
+        {StorageService.isOwnerEmail(user?.email) && onNavigateOwnerMaster && (
           <button
             onClick={onNavigateOwnerMaster}
             className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/40 text-xs font-bold hover:bg-amber-500/30 transition shadow-sm cursor-pointer"

@@ -205,24 +205,24 @@ export const defaultOwnerConfig: OwnerConfig = {
 };
 
 export const defaultSettings: BusinessSettings = {
-  businessName: 'SobarDokan',
-  businessSubtitle: 'SMART BUSINESS',
-  ownerName: 'MD ANAETULLAH',
-  phone: '01700-000000',
-  email: 'mdanaetullah2021@gmail.com',
-  address: 'মিরপুর ১০, ঢাকা, বাংলাদেশ',
-  website: 'www.amardokan.com',
-  binTin: 'BIN-9876543210',
-  tinNo: 'TIN-4567890123',
-  vatRegNo: 'VAT-12345678',
-  tradeLicenseNo: 'TRAD/DSCC/019283',
-  taxRegistrationLabel: 'কর চালানপত্র (মূসক-৬.৩)',
+  businessName: 'আমার দোকান',
+  businessSubtitle: 'স্মার্ট ব্যবসায়িক হিসাব',
+  ownerName: 'দোকান মালিক',
+  phone: '',
+  email: '',
+  address: '',
+  website: '',
+  binTin: '',
+  tinNo: '',
+  vatRegNo: '',
+  tradeLicenseNo: '',
+  taxRegistrationLabel: 'ক্যাশ মেমো',
   logoUrl: '',
   showLogoOnInvoice: true,
   invoiceHeaderLayout: 'center',
-  invoiceHeaderTitle: 'ক্যাশ মেমো ও কর চালানপত্র',
-  invoiceHeaderNote: 'সরকার অনুমোদিত ভ্যাট নিবন্ধিত প্রতিষ্ঠান',
-  vatPercent: 5,
+  invoiceHeaderTitle: 'ক্যাশ মেমো ও চালান',
+  invoiceHeaderNote: '',
+  vatPercent: 0,
   currency: 'BDT',
   currencySymbol: '৳',
   invoicePrefix: 'INV-',
@@ -235,10 +235,10 @@ export const defaultSettings: BusinessSettings = {
 };
 
 export const defaultUser: User = {
-  uid: 'usr-1',
-  name: 'MD ANAETULLAH',
-  email: 'mdanaetullah2021@gmail.com',
-  role: 'Admin'
+  uid: 'usr-default',
+  name: 'দোকান মালিক',
+  email: '',
+  role: 'admin'
 };
 
 export const defaultSMSTemplates: SMSTemplate[] = [
@@ -333,11 +333,11 @@ const defaultSMSMessages: SMSMessage[] = [
 ];
 
 const defaultCategories: Category[] = [
-  { id: 'cat-1', name: 'Groceries', banglaName: 'মুদি মালামাল', color: '#3b82f6', productCount: 4 },
-  { id: 'cat-2', name: 'Beverages', banglaName: 'পানীয় ও জুস', color: '#10b981', productCount: 2 },
-  { id: 'cat-3', name: 'Electronics', banglaName: 'ইলেকট্রনিক্স ও গ্যাজেট', color: '#8b5cf6', productCount: 3 },
-  { id: 'cat-4', name: 'Personal Care', banglaName: 'ব্যক্তিগত যত্ন ও প্রসাধন', color: '#ec4899', productCount: 2 },
-  { id: 'cat-5', name: 'Snacks & Bakery', banglaName: 'স্ন্যাকস ও বেকারি', color: '#f59e0b', productCount: 2 }
+  { id: 'cat-1', name: 'Groceries', banglaName: 'মুদি মালামাল', color: '#3b82f6', productCount: 0 },
+  { id: 'cat-2', name: 'Beverages', banglaName: 'পানীয় ও জুস', color: '#10b981', productCount: 0 },
+  { id: 'cat-3', name: 'Electronics', banglaName: 'ইলেকট্রনিক্স ও গ্যাজেট', color: '#8b5cf6', productCount: 0 },
+  { id: 'cat-4', name: 'Personal Care', banglaName: 'ব্যক্তিগত যত্ন ও প্রসাধন', color: '#ec4899', productCount: 0 },
+  { id: 'cat-5', name: 'Snacks & Bakery', banglaName: 'স্ন্যাকস ও বেকারি', color: '#f59e0b', productCount: 0 }
 ];
 
 const defaultProducts: Product[] = [
@@ -648,10 +648,66 @@ const defaultExpenses: Expense[] = [
 ];
 
 export class StorageService {
-  private static getItem<T>(key: string, defaultValue: T): T {
+  private static readonly STORE_SCOPED_KEYS = new Set([
+    STORAGE_KEYS.PRODUCTS,
+    STORAGE_KEYS.CATEGORIES,
+    STORAGE_KEYS.CUSTOMERS,
+    STORAGE_KEYS.SUPPLIERS,
+    STORAGE_KEYS.SALES,
+    STORAGE_KEYS.SALE_RETURNS,
+    STORAGE_KEYS.PURCHASES,
+    STORAGE_KEYS.PURCHASE_RETURNS,
+    STORAGE_KEYS.EXPENSES,
+    STORAGE_KEYS.INCOMES,
+    STORAGE_KEYS.CUSTOMER_LEDGER,
+    STORAGE_KEYS.SUPPLIER_LEDGER,
+    STORAGE_KEYS.STOCK_ADJUSTMENTS,
+    STORAGE_KEYS.QUOTATIONS,
+    STORAGE_KEYS.WARRANTIES,
+    STORAGE_KEYS.WARRANTY_CLAIMS,
+    STORAGE_KEYS.EMPLOYEES,
+    STORAGE_KEYS.ATTENDANCE,
+    STORAGE_KEYS.SETTINGS,
+    STORAGE_KEYS.STAFF_USERS,
+    STORAGE_KEYS.BILLING_INVOICES,
+    STORAGE_KEYS.SUPPORT_TICKETS,
+    STORAGE_KEYS.SMS_MESSAGES,
+    STORAGE_KEYS.SMS_TEMPLATES,
+    STORAGE_KEYS.SMS_SETTINGS,
+  ]);
+
+  public static getActiveUserScope(): string | null {
     try {
-      const data = localStorage.getItem(key);
-      return data ? JSON.parse(data) : defaultValue;
+      const userStr = localStorage.getItem(STORAGE_KEYS.USER);
+      if (!userStr) return null;
+      const user = JSON.parse(userStr);
+      if (user?.uid) return String(user.uid);
+      if (user?.email) return user.email.toLowerCase().replace(/[^a-z0-9_-]/g, '_');
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
+  public static getScopedKey(key: string, userScope?: string | null): string {
+    if (!this.STORE_SCOPED_KEYS.has(key)) {
+      return key;
+    }
+    const scope = userScope !== undefined ? userScope : this.getActiveUserScope();
+    if (!scope) {
+      return `${key}_unauth`;
+    }
+    return `${key}_shop_${scope}`;
+  }
+
+  private static getItem<T>(key: string, defaultValue: T, userScope?: string | null): T {
+    try {
+      const scopedKey = this.getScopedKey(key, userScope);
+      const data = localStorage.getItem(scopedKey);
+      if (data !== null) {
+        return JSON.parse(data);
+      }
+      return defaultValue;
     } catch (e) {
       console.error(`Error reading ${key}:`, e);
       return defaultValue;
@@ -660,41 +716,98 @@ export class StorageService {
 
   private static syncTimers: Record<string, any> = {};
 
-  private static setItem<T>(key: string, value: T): void {
+  private static setItem<T>(key: string, value: T, userScope?: string | null): void {
     try {
-      localStorage.setItem(key, JSON.stringify(value));
-      // Debounced best-effort async backup to Firestore to prevent high-frequency write contention and AbortErrors
-      if (this.syncTimers[key]) {
-        clearTimeout(this.syncTimers[key]);
+      const scopedKey = this.getScopedKey(key, userScope);
+      localStorage.setItem(scopedKey, JSON.stringify(value));
+      // Debounced best-effort async backup to Firestore per shop
+      if (this.syncTimers[scopedKey]) {
+        clearTimeout(this.syncTimers[scopedKey]);
       }
-      this.syncTimers[key] = setTimeout(() => {
-        delete this.syncTimers[key];
-        this.syncToFirestore(key, value).catch(() => {});
+      this.syncTimers[scopedKey] = setTimeout(() => {
+        delete this.syncTimers[scopedKey];
+        this.syncToFirestore(key, value, userScope).catch(() => {});
       }, 800);
     } catch (e) {
       console.error(`Error saving ${key}:`, e);
     }
   }
 
-  public static async syncToFirestore(key?: string, data?: any): Promise<void> {
+  public static initializeCleanStoreForUser(
+    userUid: string,
+    businessInfo?: Partial<BusinessSettings>,
+    customCategories?: Category[]
+  ): void {
+    const cleanSettings: BusinessSettings = {
+      ...defaultSettings,
+      businessName: businessInfo?.businessName || 'আমার দোকান',
+      ownerName: businessInfo?.ownerName || 'দোকান মালিক',
+      phone: businessInfo?.phone || '',
+      email: businessInfo?.email || '',
+      businessType: businessInfo?.businessType || '',
+    };
+
+    const categoriesToSave = (customCategories && customCategories.length > 0)
+      ? customCategories
+      : defaultCategories;
+
+    // Explicitly initialize every single store collection to completely nil (clean 0 state)
+    this.setItem(STORAGE_KEYS.PRODUCTS, [], userUid);
+    this.setItem(STORAGE_KEYS.CATEGORIES, categoriesToSave, userUid);
+    this.setItem(STORAGE_KEYS.CUSTOMERS, [], userUid);
+    this.setItem(STORAGE_KEYS.SUPPLIERS, [], userUid);
+    this.setItem(STORAGE_KEYS.SALES, [], userUid);
+    this.setItem(STORAGE_KEYS.SALE_RETURNS, [], userUid);
+    this.setItem(STORAGE_KEYS.PURCHASES, [], userUid);
+    this.setItem(STORAGE_KEYS.PURCHASE_RETURNS, [], userUid);
+    this.setItem(STORAGE_KEYS.EXPENSES, [], userUid);
+    this.setItem(STORAGE_KEYS.INCOMES, [], userUid);
+    this.setItem(STORAGE_KEYS.CUSTOMER_LEDGER, [], userUid);
+    this.setItem(STORAGE_KEYS.SUPPLIER_LEDGER, [], userUid);
+    this.setItem(STORAGE_KEYS.STOCK_ADJUSTMENTS, [], userUid);
+    this.setItem(STORAGE_KEYS.QUOTATIONS, [], userUid);
+    this.setItem(STORAGE_KEYS.WARRANTIES, [], userUid);
+    this.setItem(STORAGE_KEYS.WARRANTY_CLAIMS, [], userUid);
+    this.setItem(STORAGE_KEYS.EMPLOYEES, [], userUid);
+    this.setItem(STORAGE_KEYS.ATTENDANCE, [], userUid);
+    this.setItem(STORAGE_KEYS.STAFF_USERS, [], userUid);
+    this.setItem(STORAGE_KEYS.BILLING_INVOICES, [], userUid);
+    this.setItem(STORAGE_KEYS.SUPPORT_TICKETS, [], userUid);
+    this.setItem(STORAGE_KEYS.SMS_MESSAGES, [], userUid);
+    this.setItem(STORAGE_KEYS.SMS_TEMPLATES, defaultSMSTemplates, userUid);
+    this.setItem(STORAGE_KEYS.SMS_SETTINGS, {
+      ...defaultSMSSettings,
+      balance: 10, // 10 starter credits
+    }, userUid);
+    this.setItem(STORAGE_KEYS.SETTINGS, cleanSettings, userUid);
+  }
+
+  public static clearAllStoreData(userUid?: string): void {
+    const scope = userUid || this.getActiveUserScope();
+    if (!scope) return;
+    this.initializeCleanStoreForUser(scope);
+  }
+
+  public static async syncToFirestore(key?: string, data?: any, userScope?: string | null): Promise<void> {
     try {
       if (!navigator.onLine) return;
+      const scope = userScope || this.getActiveUserScope();
+      if (!scope) return;
+
       if (key && data !== undefined) {
-        const ref = doc(db, 'app_state', key);
+        const ref = doc(db, 'shops', scope, 'store', key);
         await setDoc(ref, { data, updatedAt: new Date().toISOString() }, { merge: true });
       } else {
-        // Sync all storage keys to Firestore
-        for (const storageKey of Object.values(STORAGE_KEYS)) {
-          const raw = localStorage.getItem(storageKey);
+        // Sync store keys scoped to this shop
+        for (const storageKey of this.STORE_SCOPED_KEYS) {
+          const scopedKey = this.getScopedKey(storageKey, scope);
+          const raw = localStorage.getItem(scopedKey);
           if (raw) {
             try {
               const parsed = JSON.parse(raw);
-              const ref = doc(db, 'app_state', storageKey);
+              const ref = doc(db, 'shops', scope, 'store', storageKey);
               await setDoc(ref, { data: parsed, updatedAt: new Date().toISOString() }, { merge: true });
-            } catch {
-              const ref = doc(db, 'app_state', storageKey);
-              await setDoc(ref, { data: raw, updatedAt: new Date().toISOString() }, { merge: true }).catch(() => {});
-            }
+            } catch {}
           }
         }
       }
@@ -702,23 +815,27 @@ export class StorageService {
       const msg = String(err?.message || err || '');
       const name = String(err?.name || '');
       if (name === 'AbortError' || msg.includes('aborted') || msg.includes('signal is aborted')) {
-        return; // Safely ignore aborted network requests
+        return;
       }
       console.warn('Firestore sync note:', err);
     }
   }
 
-  public static async pullFromFirestore(): Promise<void> {
+  public static async pullFromFirestore(userScope?: string | null): Promise<void> {
     try {
       if (!navigator.onLine) return;
-      for (const storageKey of Object.values(STORAGE_KEYS)) {
+      const scope = userScope || this.getActiveUserScope();
+      if (!scope) return;
+
+      for (const storageKey of this.STORE_SCOPED_KEYS) {
         try {
-          const ref = doc(db, 'app_state', storageKey);
+          const ref = doc(db, 'shops', scope, 'store', storageKey);
           const snapshot = await getDoc(ref);
           if (snapshot.exists()) {
             const val = snapshot.data()?.data;
             if (val !== undefined) {
-              localStorage.setItem(storageKey, typeof val === 'string' ? val : JSON.stringify(val));
+              const scopedKey = this.getScopedKey(storageKey, scope);
+              localStorage.setItem(scopedKey, typeof val === 'string' ? val : JSON.stringify(val));
             }
           }
         } catch (innerErr: any) {
@@ -731,7 +848,7 @@ export class StorageService {
       const msg = String(err?.message || err || '');
       const name = String(err?.name || '');
       if (name === 'AbortError' || msg.includes('aborted') || msg.includes('signal is aborted')) {
-        return; // Safely ignore aborted network requests
+        return;
       }
       console.warn('Firestore pull note:', err);
     }
@@ -757,9 +874,8 @@ export class StorageService {
 
   // Initialization & Demo Data
   public static init(): void {
-    if (!localStorage.getItem(STORAGE_KEYS.PRODUCTS)) {
-      this.seedDemoData();
-    }
+    // Intentionally no automatic seeding of demo data.
+    // Every user/shop owner starts completely clean with nil data by default.
   }
 
   public static seedDemoData(): void {
@@ -811,7 +927,7 @@ export class StorageService {
         dueAmount: 200,
         paymentMethod: 'cash',
         status: 'completed',
-        cashierName: 'MD ANAETULLAH',
+        cashierName: 'ক্যাশিয়ার',
         createdAt: new Date().toISOString()
       },
       {
@@ -849,7 +965,7 @@ export class StorageService {
         dueAmount: 0,
         paymentMethod: 'bkash',
         status: 'completed',
-        cashierName: 'MD ANAETULLAH',
+        cashierName: 'ক্যাশিয়ার',
         createdAt: new Date().toISOString()
       }
     ];
@@ -1238,7 +1354,7 @@ export class StorageService {
 
   // SMS Center Storage Methods
   public static getSMSMessages(): SMSMessage[] {
-    return this.getItem<SMSMessage[]>(STORAGE_KEYS.SMS_MESSAGES, defaultSMSMessages);
+    return this.getItem<SMSMessage[]>(STORAGE_KEYS.SMS_MESSAGES, []);
   }
 
   public static saveSMSMessage(msg: SMSMessage): void {
@@ -1302,7 +1418,30 @@ export class StorageService {
 
   // User Profile
   public static getUser(): User | null {
-    return this.getItem<User | null>(STORAGE_KEYS.USER, null);
+    const user = this.getItem<User | null>(STORAGE_KEYS.USER, null);
+    if (!user) return null;
+    const isOwner = this.isOwnerEmail(user.email);
+    if (!isOwner) {
+      let changed = false;
+      const sanitized = { ...user };
+      if (sanitized.isOwner) {
+        sanitized.isOwner = false;
+        changed = true;
+      }
+      if (sanitized.role === 'superadmin' || sanitized.role === 'Owner') {
+        sanitized.role = 'admin';
+        changed = true;
+      }
+      if (sanitized.name && sanitized.name.includes('MD ANAETULLAH')) {
+        sanitized.name = sanitized.businessName ? `${sanitized.businessName} (মালিক)` : 'দোকান মালিক';
+        changed = true;
+      }
+      if (changed) {
+        this.setItem(STORAGE_KEYS.USER, sanitized);
+      }
+      return sanitized;
+    }
+    return user;
   }
 
   public static saveUser(user: User | null): void {
@@ -1321,11 +1460,7 @@ export class StorageService {
   public static isOwnerEmail(email?: string | null): boolean {
     if (!email) return false;
     const normalized = email.trim().toLowerCase();
-    const config = this.getOwnerConfig();
-    return (
-      normalized === 'mdanaetullah2021@gmail.com' ||
-      (config.ownerEmail ? normalized === config.ownerEmail.trim().toLowerCase() : false)
-    );
+    return normalized === 'mdanaetullah2021@gmail.com';
   }
 
   // Feature Modules Management (SobarDokan Feature Controller)
@@ -1378,54 +1513,7 @@ export class StorageService {
   }
 
   public static getRegisteredUsers(): User[] {
-    const list = this.getItem<User[]>(STORAGE_KEYS.USERS, []);
-    if (list.length === 0) {
-      const now = new Date();
-      const samples: User[] = [
-        {
-          uid: 'usr-demo-1',
-          name: 'তানভীর আহমেদ',
-          businessName: 'মেসার্স তানভীর জেনারেল স্টোর',
-          email: 'tanvir.store@gmail.com',
-          phone: '01712-345678',
-          role: 'admin',
-          createdAt: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-          trialStartDate: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-          trialEndsAt: new Date(now.getTime() + 1 * 24 * 60 * 60 * 1000).toISOString(),
-          subscriptionStatus: 'trial',
-          subscriptionPlan: '3-Day Free Trial',
-        },
-        {
-          uid: 'usr-demo-2',
-          name: 'মো: জাহিদুল ইসলাম',
-          businessName: 'জাহিদ ইলেকট্রনিক্স অ্যান্ড টেলিকম',
-          email: 'zahid.telecom@gmail.com',
-          phone: '01819-876543',
-          role: 'admin',
-          createdAt: new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-          trialStartDate: new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-          trialEndsAt: new Date(now.getTime() + 20 * 24 * 60 * 60 * 1000).toISOString(),
-          subscriptionStatus: 'active',
-          subscriptionPlan: 'Business Pro (Monthly)',
-        },
-        {
-          uid: 'usr-demo-3',
-          name: 'কামাল উদ্দিন',
-          businessName: 'কামাল ব্রাদার্স ডিপার্টমেন্টাল স্টোর',
-          email: 'kamal.brothers@gmail.com',
-          phone: '01911-223344',
-          role: 'admin',
-          createdAt: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-          trialStartDate: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-          trialEndsAt: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-          subscriptionStatus: 'suspended',
-          subscriptionPlan: '3-Day Free Trial',
-        }
-      ];
-      this.setItem(STORAGE_KEYS.USERS, samples);
-      return samples;
-    }
-    return list;
+    return this.getItem<User[]>(STORAGE_KEYS.USERS, []);
   }
 
   public static saveRegisteredUser(user: User): void {
@@ -1548,7 +1636,7 @@ export class StorageService {
 
   // Employees & Attendance
   public static getEmployees(): Employee[] {
-    return this.getItem<Employee[]>(STORAGE_KEYS.EMPLOYEES, defaultEmployees);
+    return this.getItem<Employee[]>(STORAGE_KEYS.EMPLOYEES, []);
   }
 
   public static saveEmployee(employee: Employee): void {
@@ -1568,7 +1656,7 @@ export class StorageService {
   }
 
   public static getAttendance(date?: string): AttendanceRecord[] {
-    const list = this.getItem<AttendanceRecord[]>(STORAGE_KEYS.ATTENDANCE, defaultAttendanceRecords);
+    const list = this.getItem<AttendanceRecord[]>(STORAGE_KEYS.ATTENDANCE, []);
     if (date) {
       return list.filter(a => a.date === date);
     }
@@ -1592,7 +1680,7 @@ export class StorageService {
 
   // Warranty Items & Claims
   public static getWarrantyItems(): WarrantyItem[] {
-    return this.getItem<WarrantyItem[]>(STORAGE_KEYS.WARRANTIES, defaultWarrantyItems);
+    return this.getItem<WarrantyItem[]>(STORAGE_KEYS.WARRANTIES, []);
   }
 
   public static saveWarrantyItem(item: WarrantyItem): void {
@@ -1620,7 +1708,7 @@ export class StorageService {
   }
 
   public static getWarrantyClaims(): WarrantyClaim[] {
-    return this.getItem<WarrantyClaim[]>(STORAGE_KEYS.WARRANTY_CLAIMS, defaultWarrantyClaims);
+    return this.getItem<WarrantyClaim[]>(STORAGE_KEYS.WARRANTY_CLAIMS, []);
   }
 
   public static saveWarrantyClaim(claim: WarrantyClaim): void {
@@ -1636,7 +1724,7 @@ export class StorageService {
 
   // App Team Users & Roles
   public static getAppUsers(): AppUser[] {
-    return this.getItem<AppUser[]>(STORAGE_KEYS.STAFF_USERS, defaultAppUsers);
+    return this.getItem<AppUser[]>(STORAGE_KEYS.STAFF_USERS, []);
   }
 
   public static saveAppUser(user: AppUser): void {
@@ -1661,7 +1749,7 @@ export class StorageService {
   }
 
   public static getBillingInvoices(): BillingInvoice[] {
-    return this.getItem<BillingInvoice[]>(STORAGE_KEYS.BILLING_INVOICES, defaultBillingInvoices);
+    return this.getItem<BillingInvoice[]>(STORAGE_KEYS.BILLING_INVOICES, []);
   }
 
   public static addBillingInvoice(inv: BillingInvoice): void {
@@ -1672,7 +1760,7 @@ export class StorageService {
 
   // Support Tickets
   public static getSupportTickets(): SupportTicket[] {
-    return this.getItem<SupportTicket[]>(STORAGE_KEYS.SUPPORT_TICKETS, defaultSupportTickets);
+    return this.getItem<SupportTicket[]>(STORAGE_KEYS.SUPPORT_TICKETS, []);
   }
 
   public static saveSupportTicket(ticket: SupportTicket): void {
@@ -1839,18 +1927,6 @@ export class StorageService {
       let expTotal = monthExpenses.reduce((sum, e) => sum + e.amount, 0);
       let purTotal = monthPurchases.reduce((sum, p) => sum + p.grandTotal, 0);
       let ordersCount = monthSales.length;
-
-      // Realistic business baseline fallback for past months if the app was just seeded
-      // so historical charts have meaningful visual trajectory
-      if (revenue === 0 && i > 0) {
-        // Deterministic realistic numbers based on month index
-        const baseRev = 42000 + ((m * 5431 + y) % 24000);
-        revenue = Math.round(baseRev);
-        cogs = Math.round(revenue * 0.73);
-        expTotal = Math.round(3400 + ((m * 1420) % 2800));
-        purTotal = Math.round(revenue * 0.79);
-        ordersCount = Math.round(revenue / 460);
-      }
 
       const grossProfit = Math.max(0, revenue - cogs);
       const netProfit = Math.max(0, grossProfit - expTotal);

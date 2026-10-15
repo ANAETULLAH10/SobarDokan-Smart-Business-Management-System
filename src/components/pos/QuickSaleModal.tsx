@@ -151,7 +151,7 @@ export const QuickSaleModal: React.FC<QuickSaleModalProps> = ({
       dueAmount: due,
       paymentMethod,
       status: 'completed',
-      cashierName: 'MD ANAETULLAH',
+      cashierName: StorageService.getUser()?.name || 'ক্যাশিয়ার',
       createdAt: new Date().toISOString()
     };
 

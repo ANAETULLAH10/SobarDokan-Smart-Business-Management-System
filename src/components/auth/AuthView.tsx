@@ -6,6 +6,7 @@ import {
 import { User, Language, BusinessSettings } from '../../types';
 import { StorageService } from '../../services/storage';
 import { loginWithGoogle } from '../../services/firebase';
+import { SignupOnboardingView } from './SignupOnboardingView';
 
 interface AuthViewProps {
   lang: Language;
@@ -46,6 +47,17 @@ export const AuthView: React.FC<AuthViewProps> = ({
   const [forgotEmail, setForgotEmail] = useState('');
   const [forgotSuccess, setForgotSuccess] = useState(false);
 
+  // New Signup Onboarding State (Image 1 & Image 2)
+  const [onboardingData, setOnboardingData] = useState<{
+    email: string;
+    provider: 'google' | 'email';
+    initialName?: string;
+    initialBusinessName?: string;
+    initialPhone?: string;
+    firebaseUserUid?: string;
+    password?: string;
+  } | null>(null);
+
   const handleGoogleSignIn = async () => {
     setErrorMessage(null);
     setIsLoading(true);
@@ -60,43 +72,36 @@ export const AuthView: React.FC<AuthViewProps> = ({
       const isOwner = StorageService.isOwnerEmail(firebaseUser.email);
       const ownerCfg = StorageService.getOwnerConfig();
 
-      let userObj: User;
-      const now = new Date();
-      const threeDaysLater = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
-
       if (existingUser) {
-        userObj = {
+        const resolvedName = firebaseUser.displayName || 
+          (existingUser.name && !existingUser.name.includes('MD ANAETULLAH') ? existingUser.name : (isOwner ? ownerCfg.ownerName : (existingUser.businessName ? `${existingUser.businessName} (মালিক)` : 'দোকান মালিক')));
+        const userObj: User = {
           ...existingUser,
-          name: firebaseUser.displayName || existingUser.name || (isOwner ? ownerCfg.ownerName : 'দোকানদার'),
+          name: resolvedName,
           photoURL: firebaseUser.photoURL || existingUser.photoURL,
-          isOwner: isOwner || existingUser.isOwner,
-          role: isOwner ? 'superadmin' : existingUser.role,
+          isOwner: Boolean(isOwner),
+          role: isOwner ? 'superadmin' : (existingUser.role === 'superadmin' ? 'admin' : (existingUser.role || 'admin')),
           subscriptionStatus: isOwner ? 'active' : existingUser.subscriptionStatus,
           subscriptionPlan: isOwner ? 'Lifetime Owner Unlimited' : existingUser.subscriptionPlan,
         };
-      } else {
-        userObj = {
-          uid: firebaseUser.uid,
-          name: firebaseUser.displayName || (isOwner ? ownerCfg.ownerName : 'দোকানদার'),
-          email: firebaseUser.email || '',
-          photoURL: firebaseUser.photoURL || undefined,
-          role: isOwner ? 'superadmin' : 'admin',
-          isOwner: Boolean(isOwner),
-          businessName: settings.businessName || (isOwner ? 'SobarDokan Main Store' : 'আমার দোকান'),
-          phone: isOwner ? ownerCfg.ownerPhone : '',
-          createdAt: now.toISOString(),
-          trialStartDate: now.toISOString(),
-          trialEndsAt: isOwner
-            ? new Date(now.getTime() + 3650 * 24 * 60 * 60 * 1000).toISOString()
-            : threeDaysLater.toISOString(),
-          subscriptionStatus: isOwner ? 'active' : 'trial',
-          subscriptionPlan: isOwner ? 'Lifetime Owner Unlimited' : '3-Day Free Trial',
-        };
+
+        StorageService.saveUser(userObj);
+        StorageService.saveRegisteredUser(userObj);
+        onLoginSuccess(userObj);
+        return;
       }
 
-      StorageService.saveUser(userObj);
-      StorageService.saveRegisteredUser(userObj);
-      onLoginSuccess(userObj);
+      // New Google User -> Launch Onboarding (Step 1: Info, Step 2: Category)
+      setOnboardingData({
+        email: firebaseUser.email || '',
+        provider: 'google',
+        initialName: firebaseUser.displayName || '',
+        initialBusinessName: '',
+        initialPhone: '',
+        firebaseUserUid: firebaseUser.uid,
+      });
+      setIsLoading(false);
+      return;
     } catch (err: any) {
       if (err?.code === 'auth/popup-closed-by-user' || err?.code === 'auth/cancelled-popup-request') {
         console.info('Google Sign In: popup closed or cancelled by user.');
@@ -154,15 +159,25 @@ export const AuthView: React.FC<AuthViewProps> = ({
           return;
         }
 
+        const resolvedName = (existingUser.name && !existingUser.name.includes('MD ANAETULLAH'))
+          ? existingUser.name
+          : (isOwner ? ownerCfg.ownerName : (existingUser.businessName ? `${existingUser.businessName} (মালিক)` : 'দোকান মালিক'));
+
         const loggedUser: User = isOwner
           ? {
               ...existingUser,
+              name: resolvedName,
               isOwner: true,
               role: 'superadmin',
               subscriptionStatus: 'active',
               subscriptionPlan: 'Lifetime Owner Unlimited',
             }
-          : existingUser;
+          : {
+              ...existingUser,
+              name: resolvedName,
+              isOwner: false,
+              role: existingUser.role === 'superadmin' ? 'admin' : (existingUser.role || 'admin'),
+            };
 
         StorageService.saveUser(loggedUser);
         StorageService.saveRegisteredUser(loggedUser);
@@ -244,51 +259,17 @@ export const AuthView: React.FC<AuthViewProps> = ({
         return;
       }
 
-      const isOwner = StorageService.isOwnerEmail(email.trim());
-      const now = new Date();
-      const threeDaysLater = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
-
-      const newUser: User = {
-        uid: isOwner ? 'admin-owner-1' : 'usr-' + Date.now(),
-        name: name.trim(),
+      // Advance to onboarding category selection (Image 1 & Image 2)
+      setOnboardingData({
         email: email.trim(),
-        businessName: businessName.trim(),
-        phone: phone.trim(),
+        provider: 'email',
+        initialName: name.trim(),
+        initialBusinessName: businessName.trim(),
+        initialPhone: phone.trim(),
         password: password,
-        role: isOwner ? 'superadmin' : 'admin',
-        isOwner: Boolean(isOwner),
-        createdAt: now.toISOString(),
-        trialStartDate: now.toISOString(),
-        trialEndsAt: isOwner
-          ? new Date(now.getTime() + 3650 * 24 * 60 * 60 * 1000).toISOString()
-          : threeDaysLater.toISOString(),
-        subscriptionStatus: isOwner ? 'active' : 'trial',
-        subscriptionPlan: isOwner ? 'Lifetime Owner Unlimited' : '3-Day Free Trial',
-      };
-
-      // Also customize store business settings with user's info
-      const updatedSettings: BusinessSettings = {
-        ...settings,
-        businessName: businessName.trim(),
-        ownerName: name.trim(),
-        phone: phone.trim(),
-        email: email.trim(),
-      };
-      StorageService.saveSettings(updatedSettings);
-      if (onUpdateSettings) {
-        onUpdateSettings(updatedSettings);
-      }
-
-      StorageService.saveRegisteredUser(newUser);
-      StorageService.saveUser(newUser);
-
-      setSuccessMessage(isBn ? 'অভিনন্দন! আপনার ৩ দিনের ফ্রি ট্রায়াল অ্যাকাউন্ট সক্রিয় হয়েছে।' : 'Success! Your 3-day free trial account is active.');
-
-      setTimeout(() => {
-        setIsLoading(false);
-        onLoginSuccess(newUser);
-      }, 700);
-    }, 500);
+      });
+      setIsLoading(false);
+    }, 400);
   };
 
   const handleForgotPasswordSubmit = (e: React.FormEvent) => {
@@ -301,6 +282,67 @@ export const AuthView: React.FC<AuthViewProps> = ({
       setForgotEmail('');
     }, 2500);
   };
+
+  // If user is in the onboarding flow (Image 1 & Image 2)
+  if (onboardingData) {
+    return (
+      <SignupOnboardingView
+        email={onboardingData.email}
+        provider={onboardingData.provider}
+        initialName={onboardingData.initialName}
+        initialBusinessName={onboardingData.initialBusinessName}
+        initialPhone={onboardingData.initialPhone}
+        onBack={() => setOnboardingData(null)}
+        onComplete={({ name, businessName, phone, businessCategory }) => {
+          const isOwner = StorageService.isOwnerEmail(onboardingData.email);
+          const now = new Date();
+          const threeDaysLater = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+          const uid = onboardingData.firebaseUserUid || (isOwner ? 'admin-owner-1' : 'usr-' + Date.now());
+
+          const newUser: User = {
+            uid,
+            name,
+            email: onboardingData.email,
+            businessName,
+            phone,
+            businessType: businessCategory.title,
+            password: onboardingData.password,
+            role: isOwner ? 'superadmin' : 'admin',
+            isOwner: Boolean(isOwner),
+            createdAt: now.toISOString(),
+            trialStartDate: now.toISOString(),
+            trialEndsAt: isOwner
+              ? new Date(now.getTime() + 3650 * 24 * 60 * 60 * 1000).toISOString()
+              : threeDaysLater.toISOString(),
+            subscriptionStatus: isOwner ? 'active' : 'trial',
+            subscriptionPlan: isOwner ? 'Lifetime Owner Unlimited' : '3-Day Free Trial',
+          };
+
+          // Initialize fresh nil store with starter categories tailored to chosen category
+          StorageService.initializeCleanStoreForUser(
+            newUser.uid,
+            {
+              businessName,
+              ownerName: name,
+              phone,
+              email: onboardingData.email,
+              businessType: businessCategory.title,
+            },
+            businessCategory.starterCategories
+          );
+
+          StorageService.saveRegisteredUser(newUser);
+          StorageService.saveUser(newUser);
+
+          if (onUpdateSettings) {
+            onUpdateSettings(StorageService.getSettings());
+          }
+
+          onLoginSuccess(newUser);
+        }}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col justify-between relative overflow-x-hidden selection:bg-indigo-500 selection:text-white">

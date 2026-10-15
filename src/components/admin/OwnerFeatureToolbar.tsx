@@ -21,10 +21,7 @@ export const OwnerFeatureToolbar: React.FC<OwnerFeatureToolbarProps> = ({
   onRefreshAllState,
 }) => {
   const isBn = lang === 'bn';
-  const isOwner =
-    currentUser?.email === 'mdanaetullah2021@gmail.com' ||
-    currentUser?.isOwner ||
-    currentUser?.role === 'superadmin';
+  const isOwner = StorageService.isOwnerEmail(currentUser?.email);
 
   if (!isOwner) return null;
 
