@@ -5,7 +5,7 @@ import {
   Employee, AttendanceRecord, BusinessSettings, UserProfile, User, Language, ThemeMode,
   MonthlyFinancialRecord, TrendDataPoint, SMSMessage, SMSTemplate, SMSSettings,
   WarrantyClaim, AppUser, SubscriptionPlan, BillingInvoice, SupportTicket, OwnerConfig,
-  AppFeatureModule, TabType
+  AppFeatureModule, TabType, CashRegisterShift, StockTransfer
 } from '../types';
 import {
   defaultEmployees,
@@ -53,6 +53,8 @@ const STORAGE_KEYS = {
   SMS_MESSAGES: 'sobardokan_sms_messages',
   SMS_TEMPLATES: 'sobardokan_sms_templates',
   SMS_SETTINGS: 'sobardokan_sms_settings',
+  CASH_REGISTER_SHIFTS: 'sobardokan_cash_register_shifts',
+  STOCK_TRANSFERS: 'sobardokan_stock_transfers',
 };
 
 export const defaultFeatureModules: AppFeatureModule[] = [
@@ -188,6 +190,59 @@ export const defaultFeatureModules: AppFeatureModule[] = [
     enabled: true,
     badge: 'AI Smart',
     description: 'মুখে বাংলায় কথা বলে হিসাব জানা, বিক্রি এন্ট্রি ও পরামর্শ'
+  },
+  {
+    id: 'feat-quotations',
+    tabId: 'quotations',
+    nameBn: 'কোটেশন ও এস্টিমেট বিল',
+    nameEn: 'Quotations & Estimates',
+    category: 'core',
+    icon: 'FileText',
+    enabled: true,
+    badge: 'Pro',
+    description: 'গ্রাহককে এস্টিমেট মেমো প্রেরণ ও ১-ক্লিকে বিক্রয়ে রূপান্তর'
+  },
+  {
+    id: 'feat-cash-register',
+    tabId: 'cash_register',
+    nameBn: 'ক্যাশ রেজিস্টার ও শিফট মিলকরণ',
+    nameEn: 'Daily Cash Register & Shift',
+    category: 'finance',
+    icon: 'DollarSign',
+    enabled: true,
+    description: 'ওপেনিং ক্যাশ, বিক্রির হিসাব ও দিন শেষে ক্যাশ ড্রয়ার মিলকরণ'
+  },
+  {
+    id: 'feat-stock-transfer',
+    tabId: 'stock_transfer',
+    nameBn: 'গুদাম ও শাখা স্টক ট্রান্সফার',
+    nameEn: 'Godown Stock Transfer',
+    category: 'inventory',
+    icon: 'Layers',
+    enabled: true,
+    description: 'দোকান ও গুদামের মধ্যে স্টক স্থানান্তর ও চালান রেকর্ড'
+  },
+  {
+    id: 'feat-barcode-gen',
+    tabId: 'barcode_generator',
+    nameBn: 'বারকোড স্টিকার জেনারেটর',
+    nameEn: 'Barcode Sticker Generator',
+    category: 'inventory',
+    icon: 'Barcode',
+    enabled: true,
+    badge: 'Essential',
+    description: 'দোকানের নাম, দাম ও বারকোড সহ থার্মাল লেবেল স্টিকার প্রিন্ট'
+  },
+  {
+    id: 'feat-online-catalog',
+    tabId: 'online_catalog',
+    nameBn: 'ডিজিটাল ক্যাটালগ ও অনলাইন শপ',
+    nameEn: 'Digital Catalog & Web Store',
+    category: 'core',
+    icon: 'Globe',
+    enabled: true,
+    badge: 'New',
+    description: 'অনলাইনে পণ্যের প্রদর্শন ও সরাসরি হোয়াটসঅ্যাপে অর্ডার গ্রহণ'
   }
 ];
 
@@ -674,6 +729,8 @@ export class StorageService {
     STORAGE_KEYS.SMS_MESSAGES,
     STORAGE_KEYS.SMS_TEMPLATES,
     STORAGE_KEYS.SMS_SETTINGS,
+    STORAGE_KEYS.CASH_REGISTER_SHIFTS,
+    STORAGE_KEYS.STOCK_TRANSFERS,
   ]);
 
   public static getActiveUserScope(): string | null {
@@ -775,6 +832,8 @@ export class StorageService {
     this.setItem(STORAGE_KEYS.SUPPORT_TICKETS, [], userUid);
     this.setItem(STORAGE_KEYS.SMS_MESSAGES, [], userUid);
     this.setItem(STORAGE_KEYS.SMS_TEMPLATES, defaultSMSTemplates, userUid);
+    this.setItem(STORAGE_KEYS.CASH_REGISTER_SHIFTS, [], userUid);
+    this.setItem(STORAGE_KEYS.STOCK_TRANSFERS, [], userUid);
     this.setItem(STORAGE_KEYS.SMS_SETTINGS, {
       ...defaultSMSSettings,
       balance: 10, // 10 starter credits
@@ -1948,6 +2007,123 @@ export class StorageService {
     }
 
     return result;
+  }
+
+  // Quotations / Estimates
+  public static getQuotations(): Quotation[] {
+    return this.getItem<Quotation[]>(STORAGE_KEYS.QUOTATIONS, []);
+  }
+
+  public static saveQuotation(quote: Quotation): void {
+    const list = this.getQuotations();
+    const idx = list.findIndex(q => q.id === quote.id);
+    if (idx >= 0) {
+      list[idx] = quote;
+    } else {
+      list.unshift(quote);
+    }
+    this.setItem(STORAGE_KEYS.QUOTATIONS, list);
+  }
+
+  public static deleteQuotation(id: string): void {
+    const list = this.getQuotations().filter(q => q.id !== id);
+    this.setItem(STORAGE_KEYS.QUOTATIONS, list);
+  }
+
+  // Cash Register Shifts
+  public static getCashRegisterShifts(): CashRegisterShift[] {
+    return this.getItem<CashRegisterShift[]>(STORAGE_KEYS.CASH_REGISTER_SHIFTS, []);
+  }
+
+  public static getActiveShift(): CashRegisterShift | null {
+    const list = this.getCashRegisterShifts();
+    return list.find(s => s.status === 'open') || null;
+  }
+
+  public static openShift(openingCash: number, cashierName: string): CashRegisterShift {
+    const list = this.getCashRegisterShifts();
+    const newShift: CashRegisterShift = {
+      id: 'shift-' + Date.now(),
+      date: new Date().toISOString().split('T')[0],
+      openedAt: new Date().toISOString(),
+      openingCash,
+      cashSales: 0,
+      cashExpenses: 0,
+      cashIn: 0,
+      cashOut: 0,
+      expectedCash: openingCash,
+      status: 'open',
+      cashierName: cashierName || 'ক্যাশিয়ার'
+    };
+    list.unshift(newShift);
+    this.setItem(STORAGE_KEYS.CASH_REGISTER_SHIFTS, list);
+    return newShift;
+  }
+
+  public static closeShift(actualCash: number, closingNotes?: string): CashRegisterShift | null {
+    const list = this.getCashRegisterShifts();
+    const active = list.find(s => s.status === 'open');
+    if (!active) return null;
+
+    const sales = this.getSales().filter(s => s.date === active.date && s.paymentMethod === 'cash');
+    const cashSales = sales.reduce((acc, s) => acc + s.paidAmount, 0);
+    const expenses = this.getExpenses().filter(e => e.date === active.date && (e.paymentMethod === 'cash' || !e.paymentMethod));
+    const cashExpenses = expenses.reduce((acc, e) => acc + e.amount, 0);
+
+    const expectedCash = active.openingCash + cashSales + active.cashIn - cashExpenses - active.cashOut;
+    const difference = actualCash - expectedCash;
+
+    active.closedAt = new Date().toISOString();
+    active.cashSales = cashSales;
+    active.cashExpenses = cashExpenses;
+    active.expectedCash = expectedCash;
+    active.actualCash = actualCash;
+    active.difference = difference;
+    active.status = 'closed';
+    active.closingNotes = closingNotes;
+
+    this.setItem(STORAGE_KEYS.CASH_REGISTER_SHIFTS, list);
+    return active;
+  }
+
+  // Stock Transfers (Store <-> Godown)
+  public static getStockTransfers(): StockTransfer[] {
+    return this.getItem<StockTransfer[]>(STORAGE_KEYS.STOCK_TRANSFERS, []);
+  }
+
+  public static saveStockTransfer(transfer: StockTransfer): void {
+    const list = this.getStockTransfers();
+    list.unshift(transfer);
+    this.setItem(STORAGE_KEYS.STOCK_TRANSFERS, list);
+
+    // Automatically update product store and godown stock
+    const products = this.getProducts();
+    transfer.items.forEach(item => {
+      const p = products.find(prod => prod.id === item.productId);
+      if (p) {
+        p.godownStock = p.godownStock || 0;
+        if (transfer.fromLocation === 'godown' && transfer.toLocation === 'store') {
+          p.godownStock = Math.max(0, p.godownStock - item.quantity);
+          p.currentStock += item.quantity;
+        } else if (transfer.fromLocation === 'store' && transfer.toLocation === 'godown') {
+          p.currentStock = Math.max(0, p.currentStock - item.quantity);
+          p.godownStock += item.quantity;
+        }
+      }
+    });
+    this.setItem(STORAGE_KEYS.PRODUCTS, products);
+  }
+
+  // Loyalty Points update
+  public static updateCustomerLoyalty(customerId: string, pointsDelta: number): number {
+    const customers = this.getCustomers();
+    const cust = customers.find(c => c.id === customerId);
+    if (!cust) return 0;
+    const current = cust.loyaltyPoints || 0;
+    const updated = Math.max(0, current + pointsDelta);
+    cust.loyaltyPoints = updated;
+    this.setItem(STORAGE_KEYS.CUSTOMERS, customers);
+    return updated;
   }
 
   // Backup & Restore

@@ -3,7 +3,8 @@ import {
   LayoutDashboard, ShoppingCart, Package, Users, Wallet,
   ShoppingBag, DollarSign, Banknote, BarChart3, Settings,
   Store, Zap, ChevronLeft, ChevronRight, X, MessageSquare,
-  Clock, ShieldCheck, CreditCard, Headphones, UserCheck, Sparkles, Crown
+  Clock, ShieldCheck, CreditCard, Headphones, UserCheck, Sparkles, Crown,
+  FileText, Layers, Barcode, Coins
 } from 'lucide-react';
 import { Language, TabType, User } from '../../types';
 import { translations } from '../../i18n/translations';
@@ -53,6 +54,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       items: [
         { id: 'dashboard' as TabType, label: getModuleLabel('dashboard', t.dashboard), icon: LayoutDashboard },
         { id: 'pos' as TabType, label: getModuleLabel('pos', t.pos), icon: ShoppingCart },
+        { id: 'quotations' as TabType, label: getModuleLabel('quotations', lang === 'bn' ? 'কোটেশন ও এস্টিমেট' : 'Quotations & Estimates'), icon: FileText },
         { id: 'voice_assistant' as TabType, label: getModuleLabel('voice_assistant', lang === 'bn' ? 'ভয়েস কথোপকথন' : 'Voice Assistant'), icon: Sparkles },
         { id: 'sales' as TabType, label: getModuleLabel('sales', lang === 'bn' ? 'বিক্রয় তালিকা ও ফেরত' : 'Sales & Returns'), icon: ShoppingBag },
         { id: 'due_khata' as TabType, label: getModuleLabel('due_khata', t.dueKhata), icon: Wallet },
@@ -62,6 +64,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
       title: lang === 'bn' ? 'ইনভেন্টরি ও ক্রয়' : 'Inventory & Purchase',
       items: [
         { id: 'products' as TabType, label: getModuleLabel('products', lang === 'bn' ? 'সকল পণ্য' : 'All Products'), icon: Package },
+        { id: 'stock_transfer' as TabType, label: getModuleLabel('stock_transfer', lang === 'bn' ? 'গুদাম ও স্টক ট্রান্সফার' : 'Stock Transfer'), icon: Layers },
+        { id: 'barcode_generator' as TabType, label: getModuleLabel('barcode_generator', lang === 'bn' ? 'বারকোড স্টিকার জেনারেটর' : 'Barcode Generator'), icon: Barcode },
         { id: 'purchases' as TabType, label: getModuleLabel('purchases', lang === 'bn' ? 'ক্রয় ও সরবরাহ' : 'Purchases & Supplies'), icon: ShoppingBag },
         { id: 'suppliers' as TabType, label: getModuleLabel('suppliers', lang === 'bn' ? 'সরবরাহকারী' : 'Suppliers'), icon: Users },
       ]
@@ -69,6 +73,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     {
       title: lang === 'bn' ? 'হিসাব ও অর্থ' : 'Finance & Ledger',
       items: [
+        { id: 'cash_register' as TabType, label: getModuleLabel('cash_register', lang === 'bn' ? 'ক্যাশ রেজিস্টার ও ড্রয়ার' : 'Cash Register & Shift'), icon: Coins },
         { id: 'customers' as TabType, label: getModuleLabel('customers', t.customers), icon: Users },
         { id: 'expenses' as TabType, label: getModuleLabel('expenses', t.expenses), icon: DollarSign },
         { id: 'cash_flow' as TabType, label: getModuleLabel('cash_flow', t.cashFlow), icon: Banknote },

@@ -24,6 +24,10 @@ import { BillingUpgradeView } from './components/billing/BillingUpgradeView';
 import { CustomerSupportView } from './components/support/CustomerSupportView';
 import { VoiceConversationView } from './components/voice/VoiceConversationView';
 import { VoiceConversationModal } from './components/voice/VoiceConversationModal';
+import { QuotationsView } from './components/quotations/QuotationsView';
+import { StockTransferView } from './components/inventory/StockTransferView';
+import { CashRegisterView } from './components/cash/CashRegisterView';
+import { BarcodeGeneratorView } from './components/inventory/BarcodeGeneratorView';
 import { ToastContainer } from './components/common/ToastContainer';
 import { PDFPreviewModal } from './components/common/PDFPreviewModal';
 import { AuthView } from './components/auth/AuthView';
@@ -420,8 +424,11 @@ export const App: React.FC = () => {
   const tabTitles: Record<TabType, string> = {
     dashboard: lang === 'bn' ? 'ড্যাশবোর্ড' : 'Dashboard',
     pos: lang === 'bn' ? 'POS বিক্রয়' : 'POS Sales',
+    quotations: lang === 'bn' ? 'কোটেশন ও এস্টিমেট' : 'Quotations & Estimates',
     products: lang === 'bn' ? 'সকল পণ্য' : 'All Products',
     categories: lang === 'bn' ? 'ক্যাটাগরি' : 'Categories',
+    stock_transfer: lang === 'bn' ? 'গুদাম ও স্টক ট্রান্সফার' : 'Stock Transfer',
+    barcode_generator: lang === 'bn' ? 'বারকোড স্টিকার জেনারেটর' : 'Barcode Generator',
     sales: lang === 'bn' ? 'বিক্রয় তালিকা ও ফেরত' : 'Sales & Returns',
     purchases: lang === 'bn' ? 'ক্রয় ও সরবরাহ' : 'Purchases & Supplies',
     customers: lang === 'bn' ? 'কাস্টমার তালিকা' : 'Customers',
@@ -429,6 +436,7 @@ export const App: React.FC = () => {
     suppliers: lang === 'bn' ? 'সরবরাহকারী' : 'Suppliers',
     expenses: lang === 'bn' ? 'দোকানের খরচ' : 'Expenses',
     cash_flow: lang === 'bn' ? 'ক্যাশ ফ্লো' : 'Cash Flow',
+    cash_register: lang === 'bn' ? 'ক্যাশ রেজিস্টার ও শিফট' : 'Daily Cash Register',
     sms_center: lang === 'bn' ? 'SMS কেন্দ্র' : 'SMS Center',
     reports: lang === 'bn' ? 'রিপোর্ট ও বিশ্লেষণ' : 'Reports & Analytics',
     attendance: lang === 'bn' ? 'স্টাফ হাজিরা' : 'Attendance',
@@ -437,6 +445,7 @@ export const App: React.FC = () => {
     billing_upgrade: lang === 'bn' ? 'বিলিং ও আপগ্রেড' : 'Billing & Upgrade',
     customer_support: lang === 'bn' ? 'কাস্টমার সাপোর্ট' : 'Customer Support',
     voice_assistant: lang === 'bn' ? 'ভয়েস কথোপকথন (Live)' : 'Voice Assistant (Live)',
+    online_catalog: lang === 'bn' ? 'অনলাইন ক্যাটালগ' : 'Online Catalog',
     settings: lang === 'bn' ? 'সেটিংস' : 'Settings',
     owner_master: lang === 'bn' ? 'মালিক ও সুপার অ্যাডমিন প্যানেল' : 'Owner Master Control Panel'
   };
@@ -620,6 +629,17 @@ export const App: React.FC = () => {
             />
           )}
 
+          {activeTab === 'quotations' && (
+            <QuotationsView
+              lang={lang}
+              settings={settings}
+              products={products}
+              customers={customers}
+              onSaleCreated={handleSaleCompleted}
+              onRefreshAllState={refreshAllState}
+            />
+          )}
+
           {activeTab === 'products' && (
             <ProductsView
               lang={lang}
@@ -637,6 +657,24 @@ export const App: React.FC = () => {
               }}
               onDeleteProduct={handleDeleteProduct}
               onDuplicateProduct={handleDuplicateProduct}
+            />
+          )}
+
+          {activeTab === 'stock_transfer' && (
+            <StockTransferView
+              lang={lang}
+              settings={settings}
+              products={products}
+              onRefreshAllState={refreshAllState}
+            />
+          )}
+
+          {activeTab === 'barcode_generator' && (
+            <BarcodeGeneratorView
+              lang={lang}
+              settings={settings}
+              products={products}
+              onNavigateTab={(tab) => setActiveTab(tab)}
             />
           )}
 
@@ -716,6 +754,14 @@ export const App: React.FC = () => {
               sales={sales}
               purchases={purchases}
               expenses={expenses}
+            />
+          )}
+
+          {activeTab === 'cash_register' && (
+            <CashRegisterView
+              lang={lang}
+              settings={settings}
+              onRefreshAllState={refreshAllState}
             />
           )}
 

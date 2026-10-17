@@ -24,6 +24,9 @@ export interface Product {
   image?: string;
   warrantyMonths?: number;
   expiryDate?: string;
+  batchNumber?: string;
+  godownStock?: number;
+  isDeadStock?: boolean;
   description?: string;
   status: 'active' | 'inactive';
   createdAt: string;
@@ -47,6 +50,7 @@ export interface Customer {
   address?: string;
   openingBalance: number;
   creditLimit?: number;
+  loyaltyPoints?: number;
   totalPurchased: number;
   totalPaid: number;
   dueAmount: number;
@@ -105,6 +109,16 @@ export interface Sale {
   dueAmount: number;
   paymentMethod: PaymentMethod;
   paymentReference?: string;
+  splitPayments?: { method: PaymentMethod; amount: number; reference?: string }[];
+  redeemedPoints?: number;
+  pointsDiscount?: number;
+  earnedPoints?: number;
+  courierInfo?: {
+    provider: 'steadfast' | 'redx' | 'pathao' | 'paperfly' | 'sundarban' | 'other';
+    trackingCode: string;
+    deliveryCharge?: number;
+    status: 'pending' | 'shipped' | 'delivered' | 'returned';
+  };
   status: 'completed' | 'hold' | 'returned';
   notes?: string;
   cashierName?: string;
@@ -233,27 +247,6 @@ export interface StockAdjustment {
   createdAt: string;
 }
 
-export interface Quotation {
-  id: string;
-  quoteNo: string;
-  date: string;
-  validUntil: string;
-  customerName: string;
-  customerPhone: string;
-  items: {
-    productId: string;
-    productName: string;
-    quantity: number;
-    unitPrice: number;
-    lineTotal: number;
-  }[];
-  subtotal: number;
-  discount: number;
-  grandTotal: number;
-  notes?: string;
-  createdAt: string;
-}
-
 export interface WarrantyItem {
   id: string;
   customerName: string;
@@ -348,13 +341,18 @@ export type TabType =
   | 'products'
   | 'categories'
   | 'sales'
+  | 'quotations'
   | 'purchases'
+  | 'stock_transfer'
   | 'customers'
   | 'due_khata'
   | 'suppliers'
   | 'expenses'
   | 'cash_flow'
+  | 'cash_register'
   | 'reports'
+  | 'barcode_generator'
+  | 'online_catalog'
   | 'sms_center'
   | 'settings'
   | 'attendance'
@@ -364,6 +362,66 @@ export type TabType =
   | 'customer_support'
   | 'voice_assistant'
   | 'owner_master';
+
+export interface CashRegisterShift {
+  id: string;
+  date: string;
+  openedAt: string;
+  closedAt?: string;
+  openingCash: number;
+  cashSales: number;
+  cashExpenses: number;
+  cashIn: number;
+  cashOut: number;
+  expectedCash: number;
+  actualCash?: number;
+  difference?: number;
+  status: 'open' | 'closed';
+  cashierName: string;
+  closingNotes?: string;
+}
+
+export interface Quotation {
+  id: string;
+  quoteNo: string;
+  date: string;
+  validUntil: string;
+  customerId: string;
+  customerName: string;
+  customerPhone?: string;
+  items: {
+    productId: string;
+    productName: string;
+    quantity: number;
+    unitPrice: number;
+    discount: number;
+    lineTotal: number;
+  }[];
+  subtotal: number;
+  discount: number;
+  vat: number;
+  grandTotal: number;
+  status: 'draft' | 'sent' | 'converted' | 'expired';
+  notes?: string;
+  createdAt: string;
+}
+
+export interface StockTransfer {
+  id: string;
+  transferNo: string;
+  date: string;
+  fromLocation: 'store' | 'godown';
+  toLocation: 'store' | 'godown';
+  items: {
+    productId: string;
+    productName: string;
+    quantity: number;
+    sku: string;
+  }[];
+  notes?: string;
+  status: 'completed';
+  createdAt: string;
+}
 
 export interface OwnerConfig {
   ownerEmail: string;

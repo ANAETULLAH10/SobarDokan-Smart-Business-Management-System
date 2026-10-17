@@ -6,6 +6,7 @@ import {
 import { Product, Category, BusinessSettings, Language } from '../../types';
 import { translations } from '../../i18n/translations';
 import { PDFGenerator } from '../../utils/pdfGenerator';
+import { BarcodeStickerGeneratorModal } from '../pos/BarcodeStickerGeneratorModal';
 
 interface ProductsViewProps {
   lang: Language;
@@ -32,6 +33,7 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
 }) => {
   const t = translations[lang];
   const [search, setSearch] = useState('');
+  const [barcodeModalProductId, setBarcodeModalProductId] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [stockFilter, setStockFilter] = useState<'all' | 'low' | 'out'>(initialStockFilter);
 
@@ -120,6 +122,14 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
           >
             <Download className="w-3.5 h-3.5" />
             <span>Stock PDF</span>
+          </button>
+          <button
+            onClick={() => setBarcodeModalProductId('all')}
+            className="px-3 py-2 rounded-xl bg-[#111827] hover:bg-[#18233b] border border-[#1e2a47] text-xs font-semibold text-purple-300 hover:text-white flex items-center gap-1.5 transition-colors"
+            title={lang === 'bn' ? 'বারকোড স্টিকার প্রিন্ট করুন' : 'Print Barcode Stickers'}
+          >
+            <Barcode className="w-3.5 h-3.5" />
+            <span>{lang === 'bn' ? 'বারকোড প্রিন্ট' : 'Barcodes'}</span>
           </button>
           <button
             id="btn-add-product-main"
@@ -261,6 +271,13 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
                       <td className="py-3 px-4 text-right">
                         <div className="flex items-center justify-end gap-1.5">
                           <button
+                            onClick={() => setBarcodeModalProductId(product.id)}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-purple-300 hover:bg-[#1a253e]"
+                            title={lang === 'bn' ? 'বারকোড স্টিকার' : 'Barcode Sticker'}
+                          >
+                            <Barcode className="w-3.5 h-3.5" />
+                          </button>
+                          <button
                             onClick={() => onDuplicateProduct(product)}
                             className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-300 hover:bg-[#1a253e]"
                             title="Duplicate"
@@ -308,6 +325,16 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
           </table>
         </div>
       </div>
+
+      {/* Barcode Sticker Generator Modal */}
+      <BarcodeStickerGeneratorModal
+        isOpen={!!barcodeModalProductId}
+        onClose={() => setBarcodeModalProductId(null)}
+        products={products}
+        settings={settings}
+        lang={lang}
+        initialProductId={barcodeModalProductId === 'all' ? undefined : (barcodeModalProductId || undefined)}
+      />
 
     </div>
   );
