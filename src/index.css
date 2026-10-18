@@ -60,18 +60,65 @@
 
 /* Print CSS Rules */
 @media print {
-  body {
-    background-color: #ffffff !important;
-    color: #000000 !important;
-  }
-  .no-print {
+  /* Hide all app chrome & navigation */
+  #main-sidebar,
+  #main-header,
+  header,
+  aside,
+  nav,
+  .no-print,
+  #hero-banner,
+  #user-avatar-dropdown-container,
+  button,
+  .no-print-area {
     display: none !important;
   }
+
+  body, html, #root, main {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    overflow: visible !important;
+    height: auto !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
   .print-only {
     display: block !important;
   }
+
+  /* Barcode Specific Print Optimization */
+  #barcode-print-wrapper {
+    display: block !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+  }
+
+  #barcode-print-container {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+    justify-content: flex-start !important;
+    align-items: flex-start !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+  }
+
+  .barcode-sticker-item {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    border: 1px dashed #d1d5db !important;
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    box-shadow: none !important;
+  }
+
   @page {
-    margin: 10mm;
+    margin: 5mm;
     size: auto;
   }
 }
@@ -238,4 +285,31 @@ html.day-mood ::-webkit-scrollbar-thumb {
 }
 html.day-mood ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
+}
+
+/* ==========================================================================
+   Global Select & Option Styling - Prevents washed-out / white-on-white text
+   ========================================================================== */
+select {
+  color-scheme: dark;
+}
+
+select option {
+  background-color: #0d1527 !important;
+  color: #f1f5f9 !important;
+}
+
+select option:checked,
+select option:hover {
+  background-color: #1e293b !important;
+  color: #ffffff !important;
+}
+
+html.day-mood select {
+  color-scheme: light;
+}
+
+html.day-mood select option {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
 }
