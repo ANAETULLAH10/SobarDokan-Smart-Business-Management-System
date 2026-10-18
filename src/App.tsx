@@ -367,6 +367,19 @@ export const App: React.FC = () => {
 
   const handleSaveProduct = (product: Product) => {
     StorageService.saveProduct(product);
+    if (product.category) {
+      const currentCats = StorageService.getCategories();
+      const exists = currentCats.some(c => c.name.toLowerCase() === product.category.toLowerCase());
+      if (!exists) {
+        StorageService.saveCategory({
+          id: 'cat-' + Date.now(),
+          name: product.category,
+          banglaName: product.category,
+          color: '#6366f1',
+          productCount: 1
+        });
+      }
+    }
     refreshAllState();
   };
 

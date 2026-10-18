@@ -387,12 +387,23 @@ const defaultSMSMessages: SMSMessage[] = [
   }
 ];
 
-const defaultCategories: Category[] = [
-  { id: 'cat-1', name: 'Groceries', banglaName: 'মুদি মালামাল', color: '#3b82f6', productCount: 0 },
-  { id: 'cat-2', name: 'Beverages', banglaName: 'পানীয় ও জুস', color: '#10b981', productCount: 0 },
-  { id: 'cat-3', name: 'Electronics', banglaName: 'ইলেকট্রনিক্স ও গ্যাজেট', color: '#8b5cf6', productCount: 0 },
-  { id: 'cat-4', name: 'Personal Care', banglaName: 'ব্যক্তিগত যত্ন ও প্রসাধন', color: '#ec4899', productCount: 0 },
-  { id: 'cat-5', name: 'Snacks & Bakery', banglaName: 'স্ন্যাকস ও বেকারি', color: '#f59e0b', productCount: 0 }
+export const defaultCategories: Category[] = [
+  { id: 'cat-groceries', name: 'Groceries', banglaName: 'মুদি মালামাল', color: '#3b82f6', productCount: 0 },
+  { id: 'cat-rice-grains', name: 'Rice & Grains', banglaName: 'চাল, ডাল ও খাদ্যশস্য', color: '#10b981', productCount: 0 },
+  { id: 'cat-oil-spices', name: 'Oil & Spices', banglaName: 'তেল, ঘি ও মসলা', color: '#f59e0b', productCount: 0 },
+  { id: 'cat-beverages', name: 'Beverages', banglaName: 'পানীয়, চা ও কফি', color: '#06b6d4', productCount: 0 },
+  { id: 'cat-snacks', name: 'Snacks & Bakery', banglaName: 'স্ন্যাকস, বিস্কুট ও বেকারি', color: '#ec4899', productCount: 0 },
+  { id: 'cat-personal-care', name: 'Personal Care', banglaName: 'ব্যক্তিগত যত্ন ও প্রসাধন', color: '#8b5cf6', productCount: 0 },
+  { id: 'cat-cleaning', name: 'Cleaning & Household', banglaName: 'পরিষ্কার সামগ্রী ও লন্ড্রি', color: '#14b8a6', productCount: 0 },
+  { id: 'cat-dairy-eggs', name: 'Dairy & Eggs', banglaName: 'দুগ্ধজাত পণ্য ও ডিম', color: '#eab308', productCount: 0 },
+  { id: 'cat-electronics', name: 'Electronics & Gadgets', banglaName: 'ইলেকট্রনিক্স ও গ্যাজেট', color: '#6366f1', productCount: 0 },
+  { id: 'cat-mobile', name: 'Mobile & Accessories', banglaName: 'মোবাইল ও এক্সেসরিজ', color: '#0284c7', productCount: 0 },
+  { id: 'cat-it-computers', name: 'Computers & IT', banglaName: 'কম্পিউটার ও আইটি', color: '#a855f7', productCount: 0 },
+  { id: 'cat-clothing', name: 'Clothing & Fashion', banglaName: 'পোশাক ও ফ্যাশন', color: '#f43f5e', productCount: 0 },
+  { id: 'cat-medicine', name: 'Medicine & Healthcare', banglaName: 'ঔষধ ও ফার্মেসি', color: '#22c55e', productCount: 0 },
+  { id: 'cat-stationery', name: 'Stationery & Office', banglaName: 'স্টেশনারি ও খাতা-কলম', color: '#64748b', productCount: 0 },
+  { id: 'cat-baby', name: 'Baby Care', banglaName: 'শিশু যত্ন ও ডায়াপার', color: '#f472b6', productCount: 0 },
+  { id: 'cat-fruits-veg', name: 'Fruits & Vegetables', banglaName: 'ফলমূল ও কাঁচাবাজার', color: '#84cc16', productCount: 0 },
 ];
 
 const defaultProducts: Product[] = [
@@ -1072,7 +1083,12 @@ export class StorageService {
 
   // Categories
   public static getCategories(): Category[] {
-    return this.getItem<Category[]>(STORAGE_KEYS.CATEGORIES, []);
+    const list = this.getItem<Category[]>(STORAGE_KEYS.CATEGORIES, defaultCategories);
+    if (!list || list.length === 0) {
+      this.setItem(STORAGE_KEYS.CATEGORIES, defaultCategories);
+      return defaultCategories;
+    }
+    return list;
   }
 
   public static saveCategory(category: Category): void {

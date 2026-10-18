@@ -18,8 +18,8 @@ interface HeaderProps {
   onThemeToggle: () => void;
   onLogin: () => void;
   onLogout: () => void;
-  onQuickSale: () => void;
-  onAddProduct: () => void;
+  onQuickSale?: () => void;
+  onAddProduct?: () => void;
   onToggleMobileMenu?: () => void;
   isSyncing?: boolean;
   onManualSync?: () => void;
@@ -94,19 +94,6 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* Right Controls */}
       <div className="flex items-center gap-2 md:gap-3">
-        {/* Voice AI Live Assistant Button */}
-        {onOpenVoiceAssistant && (
-          <button
-            id="header-btn-voice-live"
-            onClick={onOpenVoiceAssistant}
-            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-gradient-to-r from-cyan-600 via-indigo-600 to-purple-600 hover:from-cyan-500 hover:to-purple-500 text-white text-xs font-semibold shadow-md shadow-indigo-950/40 transition-all active:scale-95 cursor-pointer"
-            title={lang === 'bn' ? 'লাইভ ভয়েস সহকারী (gemini-3.8-live)' : 'Live Voice Assistant (gemini-3.8-live)'}
-          >
-            <Sparkles className="w-3.5 h-3.5 text-cyan-200 animate-pulse" />
-            <span className="hidden sm:inline">{lang === 'bn' ? 'ভয়েস AI' : 'Voice AI'}</span>
-          </button>
-        )}
-
         {/* Trial Days Left Badge */}
         {user?.subscriptionStatus === 'trial' && (
           <button
@@ -120,28 +107,6 @@ export const Header: React.FC<HeaderProps> = ({
             </span>
           </button>
         )}
-
-        {/* Quick Sale F2 Button */}
-        <button
-          id="header-btn-quick-sale"
-          onClick={onQuickSale}
-          className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-semibold shadow-md shadow-emerald-950/30 transition-all active:scale-95"
-          title="Quick Sale / দ্রুত বিক্রয় (F2)"
-        >
-          <Zap className="w-3.5 h-3.5 text-yellow-300" />
-          <span>{t.quickSale}</span>
-        </button>
-
-        {/* Quick Add Product Button */}
-        <button
-          id="header-btn-add-product"
-          onClick={onAddProduct}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-semibold shadow-md shadow-indigo-950/40 transition-all active:scale-95"
-          title={t.addProduct}
-        >
-          <Plus className="w-3.5 h-3.5" />
-          <span className="hidden md:inline">{t.addProduct}</span>
-        </button>
 
         {/* Cloud Sync Status / Button */}
         {onManualSync && (

@@ -8,6 +8,7 @@ import { Language, BusinessSettings, Product, Sale, TabType, Customer, Purchase,
 import { translations } from '../../i18n/translations';
 import { StorageService } from '../../services/storage';
 import { DashboardTrendChart } from './DashboardTrendChart';
+import { DailyNetProfitReport } from './DailyNetProfitReport';
 import { OwnerFeatureToolbar } from '../admin/OwnerFeatureToolbar';
 
 interface DashboardViewProps {
@@ -325,7 +326,17 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
       </div>
 
-      {/* 5. BOTTOM SECTION: SALES TREND & MONEY STATUS (বিক্রয়ের ধারা ও টাকার হালচাল) */}
+      {/* 5. VISUAL REPORT SECTION: DAILY NET PROFIT (দৈনিক নিট লাভ: বিক্রয় − খরচ) */}
+      <DailyNetProfitReport
+        lang={lang}
+        settings={settings}
+        sales={sales}
+        expenses={expenses}
+        onNavigateToReports={() => handleNav('reports')}
+        onNavigateToExpenses={() => handleNav('expenses')}
+      />
+
+      {/* 6. BOTTOM SECTION: SALES TREND & MONEY STATUS (বিক্রয়ের ধারা ও টাকার হালচাল) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left (2 Cols): Sales, Profit & Expense Trend Chart */}
         <div className="lg:col-span-2 p-5 rounded-xl bg-[#111827] border border-[#1e293b]">
