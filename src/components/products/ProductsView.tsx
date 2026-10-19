@@ -1,12 +1,13 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import {
   Plus, Search, Edit2, Trash2, Copy, Barcode,
-  AlertTriangle, CheckCircle, Package, Download, Filter
+  AlertTriangle, CheckCircle, Package, Download, Filter, Upload, FileSpreadsheet
 } from 'lucide-react';
 import { Product, Category, BusinessSettings, Language } from '../../types';
 import { translations } from '../../i18n/translations';
 import { PDFGenerator } from '../../utils/pdfGenerator';
 import { BarcodeStickerGeneratorModal } from '../pos/BarcodeStickerGeneratorModal';
+import { ProductCSVImportModal } from './ProductCSVImportModal';
 
 interface ProductsViewProps {
   lang: Language;
@@ -18,6 +19,7 @@ interface ProductsViewProps {
   onEditProduct: (product: Product) => void;
   onDeleteProduct: (id: string) => void;
   onDuplicateProduct: (product: Product) => void;
+  onRefreshAllState?: () => void;
 }
 
 export const ProductsView: React.FC<ProductsViewProps> = ({
@@ -29,11 +31,13 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
   onAddProduct,
   onEditProduct,
   onDeleteProduct,
-  onDuplicateProduct
+  onDuplicateProduct,
+  onRefreshAllState
 }) => {
   const t = translations[lang];
   const [search, setSearch] = useState('');
   const [barcodeModalProductId, setBarcodeModalProductId] = useState<string | null>(null);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [stockFilter, setStockFilter] = useState<'all' | 'low' | 'out'>(initialStockFilter);
 
@@ -108,24 +112,35 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            id="btn-import-csv"
+            onClick={() => setIsImportModalOpen(true)}
+            className="px-3 py-2 rounded-xl bg-emerald-950/60 hover:bg-emerald-900/80 border border-emerald-500/40 text-xs font-semibold text-emerald-300 hover:text-white flex items-center gap-1.5 transition-colors cursor-pointer shadow-sm shadow-emerald-950/30"
+            title={lang === 'bn' ? 'CSV ফাইল থেকে পণ্য ব্যাচ ইমপোর্ট করুন' : 'Batch import products from CSV file'}
+          >
+            <Upload className="w-3.5 h-3.5" />
+            <span>{lang === 'bn' ? 'ইমপোর্ট CSV' : 'Import CSV'}</span>
+          </button>
           <button
             onClick={exportCSV}
-            className="px-3 py-2 rounded-xl bg-[#111827] hover:bg-[#18233b] border border-[#1e2a47] text-xs font-semibold text-slate-300 hover:text-white flex items-center gap-1.5 transition-colors"
+            className="px-3 py-2 rounded-xl bg-[#111827] hover:bg-[#18233b] border border-[#1e2a47] text-xs font-semibold text-slate-300 hover:text-white flex items-center gap-1.5 transition-colors cursor-pointer"
+            title={lang === 'bn' ? 'পণ্য তালিকা CSV এক্সপোর্ট' : 'Export products to CSV'}
           >
             <Download className="w-3.5 h-3.5" />
-            <span>CSV</span>
+            <span>{lang === 'bn' ? 'এক্সপোর্ট CSV' : 'Export CSV'}</span>
           </button>
           <button
             onClick={handleDownloadStockPDF}
-            className="px-3 py-2 rounded-xl bg-[#111827] hover:bg-[#18233b] border border-[#1e2a47] text-xs font-semibold text-indigo-300 hover:text-white flex items-center gap-1.5 transition-colors"
+            className="px-3 py-2 rounded-xl bg-[#111827] hover:bg-[#18233b] border border-[#1e2a47] text-xs font-semibold text-indigo-300 hover:text-white flex items-center gap-1.5 transition-colors cursor-pointer"
+            title={lang === 'bn' ? 'স্টক ইনভেন্টরি PDF রিপোর্ট' : 'Download Stock PDF Report'}
           >
             <Download className="w-3.5 h-3.5" />
             <span>Stock PDF</span>
           </button>
           <button
             onClick={() => setBarcodeModalProductId('all')}
-            className="px-3 py-2 rounded-xl bg-[#111827] hover:bg-[#18233b] border border-[#1e2a47] text-xs font-semibold text-purple-300 hover:text-white flex items-center gap-1.5 transition-colors"
+            className="px-3 py-2 rounded-xl bg-[#111827] hover:bg-[#18233b] border border-[#1e2a47] text-xs font-semibold text-purple-300 hover:text-white flex items-center gap-1.5 transition-colors cursor-pointer"
             title={lang === 'bn' ? 'বারকোড স্টিকার প্রিন্ট করুন' : 'Print Barcode Stickers'}
           >
             <Barcode className="w-3.5 h-3.5" />
@@ -134,7 +149,7 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
           <button
             id="btn-add-product-main"
             onClick={onAddProduct}
-            className="px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-bold shadow-md shadow-indigo-950 flex items-center gap-1.5 transition-all active:scale-95"
+            className="px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-bold shadow-md shadow-indigo-950 flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer"
           >
             <Plus className="w-4 h-4 stroke-[2.5]" />
             <span>{t.addProduct}</span>
@@ -334,6 +349,21 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
         settings={settings}
         lang={lang}
         initialProductId={barcodeModalProductId === 'all' ? undefined : (barcodeModalProductId || undefined)}
+      />
+
+      {/* CSV Batch Import Modal */}
+      <ProductCSVImportModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        existingProducts={products}
+        categories={categories}
+        settings={settings}
+        lang={lang}
+        onImportSuccess={() => {
+          if (onRefreshAllState) {
+            onRefreshAllState();
+          }
+        }}
       />
 
     </div>

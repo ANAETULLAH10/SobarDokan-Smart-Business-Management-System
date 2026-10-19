@@ -1058,6 +1058,90 @@ export class StorageService {
     this.setItem(STORAGE_KEYS.PRODUCTS, list);
   }
 
+  public static batchSaveProducts(productsToSave: Product[]): { added: number; updated: number; total: number } {
+    const list = this.getProducts();
+    let added = 0;
+    let updated = 0;
+    const now = new Date().toISOString();
+
+    for (const item of productsToSave) {
+      // Find matching existing product by id, sku, barcode, or name
+      const index = list.findIndex(p => 
+        (item.id && p.id === item.id) ||
+        (item.sku && p.sku && p.sku.trim().toLowerCase() === item.sku.trim().toLowerCase()) ||
+        (item.barcode && p.barcode && p.barcode.trim() === item.barcode.trim()) ||
+        (item.name && p.name && p.name.trim().toLowerCase() === item.name.trim().toLowerCase())
+      );
+
+      if (index >= 0) {
+        list[index] = {
+          ...list[index],
+          ...item,
+          id: list[index].id, // preserve persistent id
+          currentStock: typeof item.currentStock === 'number' ? item.currentStock : list[index].currentStock,
+          purchasePrice: typeof item.purchasePrice === 'number' ? item.purchasePrice : list[index].purchasePrice,
+          sellingPrice: typeof item.sellingPrice === 'number' ? item.sellingPrice : list[index].sellingPrice,
+          updatedAt: now
+        };
+        updated++;
+      } else {
+        const newProduct: Product = {
+          id: item.id || `prod-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
+          name: item.name || 'Unnamed Product',
+          banglaName: item.banglaName || '',
+          category: item.category || 'General',
+          sku: item.sku || `SKU-${Math.floor(1000 + Math.random() * 9000)}`,
+          barcode: item.barcode || `8941${Date.now().toString().slice(-8)}${Math.floor(Math.random() * 90 + 10)}`,
+          unit: item.unit || 'pcs',
+          purchasePrice: Number(item.purchasePrice) || 0,
+          sellingPrice: Number(item.sellingPrice) || 0,
+          openingStock: Number(item.currentStock) || 0,
+          currentStock: Number(item.currentStock) || 0,
+          minStockAlert: Number(item.minStockAlert) || 5,
+          godownStock: Number(item.godownStock) || 0,
+          taxPercent: Number(item.taxPercent) || 0,
+          discount: Number(item.discount) || 0,
+          status: 'active',
+          createdAt: item.createdAt || now,
+          updatedAt: now
+        };
+        list.unshift(newProduct);
+        added++;
+      }
+    }
+
+    this.setItem(STORAGE_KEYS.PRODUCTS, list);
+
+    // Auto-create any missing categories
+    try {
+      const categories = this.getCategories();
+      const existingNames = new Set(categories.map(c => c.name.trim().toLowerCase()));
+      let categoriesUpdated = false;
+
+      for (const p of productsToSave) {
+        if (p.category && !existingNames.has(p.category.trim().toLowerCase())) {
+          categories.push({
+            id: `cat-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+            name: p.category.trim(),
+            banglaName: p.category.trim(),
+            color: '#6366f1',
+            productCount: 1
+          });
+          existingNames.add(p.category.trim().toLowerCase());
+          categoriesUpdated = true;
+        }
+      }
+
+      if (categoriesUpdated) {
+        this.setItem(STORAGE_KEYS.CATEGORIES, categories);
+      }
+    } catch (e) {
+      console.warn('Category sync warning:', e);
+    }
+
+    return { added, updated, total: added + updated };
+  }
+
   public static deleteProduct(id: string): void {
     const list = this.getProducts().filter(p => p.id !== id);
     this.setItem(STORAGE_KEYS.PRODUCTS, list);

@@ -670,6 +670,7 @@ export const App: React.FC = () => {
               }}
               onDeleteProduct={handleDeleteProduct}
               onDuplicateProduct={handleDuplicateProduct}
+              onRefreshAllState={refreshAllState}
             />
           )}
 
